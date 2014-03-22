@@ -57,15 +57,17 @@ class SpeedTest
       machine = YAML.load(File.open("./machine.yml"))
 
 
-    data = {
-      :upload_speed => @upload_speed,
-      :download_speed => @download_speed,
-      :test_case_id => test[:test_case_id],
-      :machine_id => machine[:machine_id],
-      :time => Time.now.to_i * 1000
-    }
+      data = {
+        :speed_data  => {
+        :upload_speed => @upload_speed,
+        :download_speed => @download_speed,
+        :test_case_id => test[:test_case_id],
+        :machine_id => machine[:machine_id],
+        :time => Time.now.to_i * 1000
+      }
+      }
 
-    postData = Net::HTTP.post_form(URI.parse("http://wc.d.techrockstars.com:3000/machine/#{machine[:machine_id]}/speed_test"),data)
+      postData = Net::HTTP.post_form(URI.parse("http://wc.d.techrockstars.com:3000/machine/#{machine[:machine_id]}/speed_test"),data)
 
     end
 
