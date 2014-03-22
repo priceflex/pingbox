@@ -65,7 +65,7 @@ class SpeedTest
       :time => Time.now.to_i * 1000
     }
 
-    postData = Net::HTTP.post_form(URI.parse("http://wc.d.techrockstars.com/machine/#{machine[machine_id]}/speed_test"),data)
+    postData = Net::HTTP.post_form(URI.parse("http://wc.d.techrockstars.com/machine/#{machine[:machine_id]}/speed_test"),data)
 
     end
 
