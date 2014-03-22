@@ -28,7 +28,7 @@ class SpeedTest
 
   def start_speed_test
     start_time = Time.now
-    file_size = File.size("./upload.file") / 1024.0 / 1024.0
+    file_size = File.size("#{@current_path}/upload.file") / 1024.0 / 1024.0
     file_name = "#{(rand * 100000).to_i}"
     new_object = @bucket.objects.build("#{file_name}")
     new_object.content = File.open("#{@@current_path}/upload.file")
