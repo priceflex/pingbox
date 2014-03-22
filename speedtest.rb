@@ -56,7 +56,6 @@ class SpeedTest
       test = YAML.load(File.open("./test_case.yml"))
       machine = YAML.load(File.open("./machine.yml"))
 
-    binding.pry      
 
     data = {
       :upload_speed => @upload_speed,
