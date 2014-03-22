@@ -1,0 +1,3 @@
+#!/bin/bash
+
+cd /home/pingbox/pingbox && git pull && /usr/local/bin/bundle && /usr/local/bin/whenever --update 
