@@ -2,7 +2,7 @@
 
 #fallocate -l 5M upload.file
 
-
+@@current_path = "#{File.dirname(__FILE__)}"
 
 require 's3'
 require 'yaml'
@@ -31,7 +31,7 @@ class SpeedTest
     file_size = File.size("./upload.file") / 1024.0 / 1024.0
     file_name = "#{(rand * 100000).to_i}"
     new_object = @bucket.objects.build("#{file_name}")
-    new_object.content = File.open("./upload.file")
+    new_object.content = File.open("#{@@current_path}/upload.file")
     new_object.save
     end_time = Time.now
 
@@ -44,7 +44,7 @@ class SpeedTest
     start_time = Time.now
     system("wget https://s3.amazonaws.com/pingbox-speedtest-us/5mb-download.file")
     end_time = Time.now
-    system("rm ./5mb-download.file")
+    system("rm #{@@current_path}/5mb-download.file")
 
 
     @download_speed = (file_size / (end_time - start_time)) * 8
@@ -52,9 +52,9 @@ class SpeedTest
   end
 
   def send_results
-    if File.exist?("./machine.yml") && File.exist?("test_case.yml")
-      test = YAML.load(File.open("./test_case.yml"))
-      machine = YAML.load(File.open("./machine.yml"))
+    if File.exist?("#{@@current_path}/machine.yml") && File.exist?("#{@@current_path}/test_case.yml")
+      test = YAML.load(File.open("#{@@current_path}/test_case.yml"))
+      machine = YAML.load(File.open("#{@@current_path}/machine.yml"))
 
 
       data = {
