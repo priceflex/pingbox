@@ -17,7 +17,7 @@ class SpeedTest
       :secret_access_key => ENV['ec2_secret_access_key']
     )
 
-    @bucket = @s3.buckets.find('pingbox-speedtest')
+    @bucket = @s3.buckets.find('pingbox-speedtest-us')
 
     @upload_speed = 0.0
     @donlowad_speed = 0.0
@@ -42,7 +42,7 @@ class SpeedTest
 
 
     start_time = Time.now
-    system("wget http://s3-eu-west-1.amazonaws.com/pingbox-speedtest/5mb-download.file")
+    system("wget https://s3.amazonaws.com/pingbox-speedtest-us/5mb-download.file")
     end_time = Time.now
     system("rm ./5mb-download.file")
 
@@ -65,7 +65,7 @@ class SpeedTest
       :time => Time.now.to_i * 1000
     }
 
-    postData = Net::HTTP.post_form(URI.parse("http://wc.d.techrockstars.com/machine/#{machine[:machine_id]}/speed_test"),data)
+    postData = Net::HTTP.post_form(URI.parse("http://wc.d.techrockstars.com:3000/machine/#{machine[:machine_id]}/speed_test"),data)
 
     end
 
