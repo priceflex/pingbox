@@ -70,7 +70,7 @@ class TestCase
         xml_data = Net::HTTP.get_response(URI.parse(url)).body
         data = XmlSimple.xml_in(xml_data)
         public_ip = {:public_ip => data["ipaddress"][0]}
-        @public_ip = File.open("#{@@current_path}/public_ip.yml", "w+") {|f| f.write(public_ip.to_yaml) }
+        @public_ip = File.open("#{@@current_path}/public_ip.yml", "w+") {|f| f.write(public_ip.to_yaml) }[:public_ip]
       rescue
         @public_ip = "Not available"
       end
