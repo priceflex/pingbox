@@ -193,6 +193,7 @@ class PingData
       :access_key_id     => ENV['ec2_access_key_id'],
       :secret_access_key => ENV['ec2_secret_access_key']
     )
+    begin
 
     bucket = s3_service.buckets.find("pingbox-data")
 
@@ -207,6 +208,9 @@ class PingData
       if new_object.exists?
          FileUtils.rm(file)
       end
+    end
+    rescue
+      puts "Error Sending to S3"
     end
   end
 
