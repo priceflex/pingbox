@@ -53,6 +53,8 @@ class TestCase
 
       if postData.code == "200" 
         #Maybe output to log or something
+      rescue
+
       end
     end
   end
