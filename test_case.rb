@@ -32,48 +32,49 @@ class TestCase
     start_work
   end
 
-def report_to_monitor
- # if @nmap_address is present do a nmap test
- if @nmap_address
-   @nmap_dump = `/usr/bin/nmap -sP #{@nmap_address}`
- end
- @ifconfig_dump = `/sbin/ifconfig`
- @ps_aux_dump = `/bin/ps aux`
- @du_sh_dump = `/usr/bin/du -sh /home/pingbox/pingbox/data`
- @private_ip = Socket.ip_address_list.detect{|intf| intf.ipv4_private?}.ip_address
- public_ip
- transmit_monitor
- 
-end
-
-def transmit_monitor 
-    data = {:_method => :put, :ifconfig_dump => @ifconfig_dump, :ps_aux_dump => @ps_aux_dump, :du_sh_dump => @du_sh_dump, :private_ip => @private_ip, :public_ip=> @public_ip, :nmap_dump => @nmap_dump }
-
-    postData = Net::HTTP.post_form(URI.parse("#{@url}/machine/#{@machine_data[:machine_id]}"), data)
-
-    if postData.code == "200" 
-      #Maybe output to log or something
+  def report_to_monitor
+    # if @nmap_address is present do a nmap test
+    if @nmap_address
+      @nmap_dump = `/usr/bin/nmap -sP #{@nmap_address}`
     end
-end
+    @ifconfig_dump = `/sbin/ifconfig`
+    @ps_aux_dump = `/bin/ps aux`
+    @du_sh_dump = `/usr/bin/du -sh /home/pingbox/pingbox/data`
+    @private_ip = Socket.ip_address_list.detect{|intf| intf.ipv4_private?}.ip_address
+    public_ip
+    transmit_monitor
 
-def public_ip
+  end
+
+  def transmit_monitor 
+    data = {:_method => :put, :ifconfig_dump => @ifconfig_dump, :ps_aux_dump => @ps_aux_dump, :du_sh_dump => @du_sh_dump, :private_ip => @private_ip, :public_ip=> @public_ip, :nmap_dump => @nmap_dump }
+    begin
+      postData = Net::HTTP.post_form(URI.parse("#{@url}/machine/#{@machine_data[:machine_id]}"), data)
+
+      if postData.code == "200" 
+        #Maybe output to log or something
+      end
+    end
+  end
+
+  def public_ip
 
 
-if File.exist?("#{@@current_path}/public_ip.yml") 
-  @public_ip = YAML.load(File.open("#{@@current_path}/public_ip.yml"))
-else 
-  url = "http://ip.techrockstars.com/?format=xml"
-begin
-  xml_data = Net::HTTP.get_response(URI.parse(url)).body
-  data = XmlSimple.xml_in(xml_data)
-  public_ip = {:public_ip => data["ipaddress"][0]}
-  @public_ip = File.open("#{@@current_path}/public_ip.yml", "w+") {|f| f.write(public_ip.to_yaml) }
-rescue
-@public_ip = "Not available"
-end
-end 
+    if File.exist?("#{@@current_path}/public_ip.yml") 
+      @public_ip = YAML.load(File.open("#{@@current_path}/public_ip.yml"))
+    else 
+      url = "http://ip.techrockstars.com/?format=xml"
+      begin
+        xml_data = Net::HTTP.get_response(URI.parse(url)).body
+        data = XmlSimple.xml_in(xml_data)
+        public_ip = {:public_ip => data["ipaddress"][0]}
+        @public_ip = File.open("#{@@current_path}/public_ip.yml", "w+") {|f| f.write(public_ip.to_yaml) }
+      rescue
+        @public_ip = "Not available"
+      end
+    end 
 
-end
+  end
 
 
   def transmit_to_database
@@ -92,11 +93,11 @@ end
 
     # Once a 200 is received then remove records from file
     if postData.code == "200" || @clear_ping_data
-     PingData.new.clear_file
+      PingData.new.clear_file
       if @clear_ping_data
-   	%w{env.yml public_ip.yml}.each do |file|
-           FileUtils.rm("#{@@current_path}/#{file}")
-	end	
+        %w{env.yml public_ip.yml}.each do |file|
+          FileUtils.rm("#{@@current_path}/#{file}")
+        end	
       end
       @clear_ping_data = false 
     end
@@ -193,19 +194,19 @@ end
   end
 
   def create_env_file(env)
-      data = {:ping_box_env => env}
-      File.open("#{@@current_path}/env.yml", "w+") {|f| f.write(data.to_yaml) }
+    data = {:ping_box_env => env}
+    File.open("#{@@current_path}/env.yml", "w+") {|f| f.write(data.to_yaml) }
   end
 
   def load_machine_data 
     parsed = begin
                if File.exist?("#{@@current_path}/env.yml")
-                @env= YAML.load(File.open("#{@@current_path}/env.yml"))
-                if @env["ping_box_env"] == "production"
-                 @url = "http://ping.techrockstars.com" 
-                else
-                 @url = "http://wc.d.techrockstars.com:3000" 
-                end
+                 @env= YAML.load(File.open("#{@@current_path}/env.yml"))
+                 if @env["ping_box_env"] == "production"
+                   @url = "http://ping.techrockstars.com" 
+                 else
+                   @url = "http://wc.d.techrockstars.com:3000" 
+                 end
                else
                  @env = "production"
                  create_env_file("production") #production by default
