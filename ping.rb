@@ -185,7 +185,7 @@ class PingData
     @hash_file_name = Hasher.new("#{@@current_path}/ping.yml").hashsum
   end
   def zip_ping_file
-    system("gzip #{@@current_path}/ping.yml")
+    system("gzip -9 #{@@current_path}/ping.yml")
     FileUtils.mv "#{@@current_path}/ping.yml.gz", "#{@@current_path}/data/#{@hash_file_name}.gz"
   end
   def sent_all_files_to_s3
