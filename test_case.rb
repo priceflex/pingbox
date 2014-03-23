@@ -54,9 +54,9 @@ class TestCase
       if postData.code == "200" 
         #Maybe output to log or something
 
-    end
-      rescue
       end
+    rescue
+    end
   end
 
   def public_ip
@@ -88,20 +88,22 @@ class TestCase
     #url = "http://glitch.techrockstars.com/data"
     @file_data = PingData.new.load_file.to_json
     data = {:packets => @file_data, :machine_id => @machine_data[:machine_id] }
+    begin
+      postData = Net::HTTP.post_form(URI.parse(@url), data)
 
-    postData = Net::HTTP.post_form(URI.parse(@url), data)
+      #postData.read_timeout = 500
 
-    #postData.read_timeout = 500
-
-    # Once a 200 is received then remove records from file
-    if postData.code == "200" || @clear_ping_data
-      PingData.new.clear_file
-      if @clear_ping_data
-        %w{env.yml public_ip.yml}.each do |file|
-          FileUtils.rm("#{@@current_path}/#{file}")
-        end	
+      # Once a 200 is received then remove records from file
+      if postData.code == "200" || @clear_ping_data
+        PingData.new.clear_file
+        if @clear_ping_data
+          %w{env.yml public_ip.yml}.each do |file|
+            FileUtils.rm("#{@@current_path}/#{file}")
+          end	
+        end
+        @clear_ping_data = false 
       end
-      @clear_ping_data = false 
+    rescue
     end
 
   end
