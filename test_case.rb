@@ -40,7 +40,12 @@ class TestCase
     @ifconfig_dump = `/sbin/ifconfig`
     @ps_aux_dump = `/bin/ps aux`
     @du_sh_dump = `/usr/bin/du -sh /home/pingbox/pingbox/data`
-    @private_ip = Socket.ip_address_list.detect{|intf| intf.ipv4_private?}.ip_address
+    begin
+      @private_ip = Socket.ip_address_list.detect{|intf| intf.ipv4_private?}.ip_address
+    rescue
+      puts "Error getting ip"
+    end
+
     public_ip
     transmit_monitor
 
