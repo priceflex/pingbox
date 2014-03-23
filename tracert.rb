@@ -44,6 +44,12 @@ class TraceRoute
 
 end
 
-route = TraceRoute.new(["google.com", "wc.d.techrockstars.com"]).output
-puts route
+if File.exist?("#{@@current_path}/test_case.yml")
+  machine_data= YAML.load(File.open("#{@@current_path}/test_case.yml"))
+  if machine_data
+    machine_data[:ping_hosts]
+    TraceRoute.new(machine_data[:ping_hosts]).output
+  end
+
+end
 
