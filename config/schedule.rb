@@ -27,6 +27,10 @@ every 1.minute do
   command "ruby #{@@current_path}/test_case.rb"
 end
 
+every 10.minute do
+  command "ruby #{@@current_path}/tracert.rb"
+end
+
 every 30.minutes do
   command "ruby #{@@current_path}/speedtest.rb"
 end
