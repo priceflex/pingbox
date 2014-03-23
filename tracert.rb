@@ -18,6 +18,7 @@ class TraceRoute
     ips.each do |ip|
       @output << `traceroute #{ip} -q 1 -w 1`
     end
+    send_results
   end
 
   def output
