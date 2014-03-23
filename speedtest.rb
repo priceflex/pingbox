@@ -16,14 +16,16 @@ class SpeedTest
       :access_key_id     => ENV['ec2_access_key_id'], 
       :secret_access_key => ENV['ec2_secret_access_key']
     )
+    begin
+      @bucket = @s3.buckets.find('pingbox-speedtest-us')
 
-    @bucket = @s3.buckets.find('pingbox-speedtest-us')
-
-    @upload_speed = 0.0
-    @donlowad_speed = 0.0
-
-    start_speed_test
-    send_results
+      @upload_speed = 0.0
+      @donlowad_speed = 0.0
+      start_speed_test
+      send_results
+    rescue
+      puts "Cannot connect to s3"
+    end
   end
 
   def start_speed_test
@@ -66,8 +68,11 @@ class SpeedTest
         :time => Time.now.to_i * 1000
       }
       }
-
-      postData = Net::HTTP.post_form(URI.parse("http://wc.d.techrockstars.com:3000/machine/#{machine[:machine_id]}/speed_test"),data)
+      begin
+        postData = Net::HTTP.post_form(URI.parse("http://wc.d.techrockstars.com:3000/machine/#{machine[:machine_id]}/speed_test"),data)
+      rescue
+        puts "Cannot send results"
+      end
 
     end
 
