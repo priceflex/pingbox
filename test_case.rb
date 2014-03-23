@@ -63,14 +63,16 @@ class TestCase
 
 
     if File.exist?("#{@@current_path}/public_ip.yml") 
-      @public_ip = YAML.load(File.open("#{@@current_path}/public_ip.yml"))
+      @public_ip = YAML.load(File.open("#{@@current_path}/public_ip.yml"))[:public_ip]
     else 
       url = "http://ip.techrockstars.com/?format=xml"
       begin
         xml_data = Net::HTTP.get_response(URI.parse(url)).body
         data = XmlSimple.xml_in(xml_data)
         public_ip = {:public_ip => data["ipaddress"][0]}
-        @public_ip = File.open("#{@@current_path}/public_ip.yml", "w+") {|f| f.write(public_ip.to_yaml) }[:public_ip]
+        @public_ip = data["ipaddress"][0]
+
+        File.open("#{@@current_path}/public_ip.yml", "w+") {|f| f.write(public_ip.to_yaml) }
       rescue
         @public_ip = "Not available"
       end
