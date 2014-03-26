@@ -209,6 +209,7 @@ class PingData
          FileUtils.rm(file)
       end
     end
+    puts "Sent all data to s3"
     rescue
       puts "Error Sending to S3"
     end
@@ -218,6 +219,7 @@ class PingData
     save_staging_file
     sha_ping_file
     zip_ping_file
+    puts "Saving to S3"
     sent_all_files_to_s3
 
 

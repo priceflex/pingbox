@@ -54,11 +54,12 @@ class TestCase
   def transmit_monitor 
     data = {:_method => :put, :ifconfig_dump => @ifconfig_dump, :ps_aux_dump => @ps_aux_dump, :du_sh_dump => @du_sh_dump, :private_ip => @private_ip, :public_ip=> @public_ip, :nmap_dump => @nmap_dump }
     begin
+      puts "Transmmitting Data"
       postData = Net::HTTP.post_form(URI.parse("#{@url}/machine/#{@machine_data[:machine_id]}"), data)
 
       if postData.code == "200" 
         #Maybe output to log or something
-
+        puts "Transmitted Monitor OK"
       end
     rescue
     end
@@ -140,6 +141,7 @@ class TestCase
     #
 
     begin
+      puts "Asking server test case"
       url = "#{@url}/machine/#{@machine_data[:machine_id]}/test_cases.xml"
       #url = "http://glitch.techrockstars.com/"
       xml_data = Net::HTTP.get_response(URI.parse(url)).body
@@ -153,6 +155,8 @@ class TestCase
       @clear_ping_data = to_boolean(data["reset-ping-data"])
       @nmap_address = data["nmap-address"][0]
       create_test_case_file
+
+      puts "Got test from server"
     rescue
       if File.exist?("#{@@current_path}/test_case.yml")
         machine_data= YAML.load(File.open("#{@@current_path}/test_case.yml"))
@@ -278,6 +282,7 @@ class TestCase
       sleep 1.5
     end
     @ping_data.save_file  
+    puts "Saved Files"
 
   end
 end
