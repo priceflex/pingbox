@@ -44,7 +44,7 @@ class SpeedTest
 
 
     start_time = Time.now
-    system("wget https://s3.amazonaws.com/pingbox-speedtest-us/5mb-download.file -O #{@@current_path}/5mb-download.file")
+    system("wget https://pingbox-speedtest-us.s3.amazonaws.com/5mb-download.file -O #{@@current_path}/5mb-download.file")
     end_time = Time.now
     system("rm #{@@current_path}/5mb-download.file")
 
