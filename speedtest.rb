@@ -69,7 +69,7 @@ class SpeedTest
       }
       }
       begin
-        postData = Net::HTTP.post_form(URI.parse("http://wc.d.techrockstars.com:3000/machine/#{machine[:machine_id]}/speed_test"),data)
+        postData = Net::HTTP.post_form(URI.parse("http://ping.techrockstars.com/machine/#{machine[:machine_id]}/speed_test"),data)
       rescue
         puts "Cannot send results"
       end
