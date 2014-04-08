@@ -21,7 +21,7 @@ class TestCase
     @clear_ping_data = false
     #@env= nil
     get_env
-    @url = ""
+    #@url = ""
     @nmap_address = nil
     @nmap_dump 
     load_machine_data
