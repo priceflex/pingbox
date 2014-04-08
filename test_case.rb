@@ -217,7 +217,7 @@ class TestCase
   def get_env
     if File.exist?("#{@@current_path}/env.yml")
       @env= YAML.load(File.open("#{@@current_path}/env.yml"))
-      if @env["ping_box_env"] == "production"
+      if @env[:ping_box_env] == "production"
         @url = "http://ping.techrockstars.com" 
       else
         @url = "http://wc.d.techrockstars.com:3000" 
