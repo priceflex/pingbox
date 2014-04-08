@@ -152,7 +152,7 @@ class TestCase
       @ping_hosts = data["ping-hosts-addresses"][0].split("\n")
       @ping_times = (60 / timeout_in_seconds) / @ping_hosts.size
       @test_case_id = data["id"][0]["content"].to_i
-      @clear_ping_data = to_boolean(data["reset-ping-data"])
+      @clear_ping_data = to_boolean(data["reset-ping-data"][0]["content"])
       @nmap_address = data["nmap-address"][0]
       create_test_case_file
 
