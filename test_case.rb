@@ -17,10 +17,10 @@ require 'socket'
 
 class TestCase
   def initialize
+    get_env
     @machine_data = nil
     @clear_ping_data = false
     #@env= nil
-    get_env
     #@url = ""
     @nmap_address = nil
     @nmap_dump 
