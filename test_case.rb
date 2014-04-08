@@ -19,7 +19,8 @@ class TestCase
   def initialize
     @machine_data = nil
     @clear_ping_data = false
-    @env= nil
+    #@env= nil
+    get_env
     @url = ""
     @nmap_address = nil
     @nmap_dump 
@@ -213,19 +214,22 @@ class TestCase
     File.open("#{@@current_path}/env.yml", "w+") {|f| f.write(data.to_yaml) }
   end
 
+  def get_env
+    if File.exist?("#{@@current_path}/env.yml")
+      @env= YAML.load(File.open("#{@@current_path}/env.yml"))
+      if @env["ping_box_env"] == "production"
+        @url = "http://ping.techrockstars.com" 
+      else
+        @url = "http://wc.d.techrockstars.com:3000" 
+      end
+    else
+      @env = "production"
+      create_env_file("production") #production by default
+    end
+  end
+
   def load_machine_data 
     parsed = begin
-               if File.exist?("#{@@current_path}/env.yml")
-                 @env= YAML.load(File.open("#{@@current_path}/env.yml"))
-                 if @env["ping_box_env"] == "production"
-                   @url = "http://ping.techrockstars.com" 
-                 else
-                   @url = "http://wc.d.techrockstars.com:3000" 
-                 end
-               else
-                 @env = "production"
-                 create_env_file("production") #production by default
-               end
 
                if File.exist?("#{@@current_path}/machine.yml")
                  @machine_data= YAML.load(File.open("#{@@current_path}/machine.yml"))
