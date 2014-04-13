@@ -234,7 +234,6 @@ class TestCase
                if File.exist?("#{@@current_path}/machine.yml")
                  @machine_data= YAML.load(File.open("#{@@current_path}/machine.yml"))
                else
-                 FileUtils.touch("#{@@current_path}/machine.yml")
                  create_machine_file
                  @machine_data= YAML.load(File.open("#{@@current_path}/machine.yml"))
                end
