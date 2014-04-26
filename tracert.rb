@@ -38,7 +38,7 @@ class TraceRoute
       }
       begin
 
-        postData = Net::HTTP.post_form(URI.parse("http://wc.d.techrockstars.com:3000/machine/#{machine[:machine_id]}"),data)
+        postData = Net::HTTP.post_form(URI.parse("http://ping.techrockstars.com/machine/#{machine[:machine_id]}"),data)
       rescue
         puts "Error sending results"
       end
