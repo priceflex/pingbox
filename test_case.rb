@@ -220,7 +220,7 @@ class TestCase
       if @env[:ping_box_env] == "production"
         @url = "http://ping.techrockstars.com" 
       else
-        @url = "http://techrockstars.com:3000" 
+        @url = "http://dev2.techrockstars.com:3000" 
       end
     else
       @env = "production"
