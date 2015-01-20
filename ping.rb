@@ -195,7 +195,17 @@ class PingData
     )
     begin
 
-    bucket = s3_service.buckets.find("pingbox-data")
+    if File.exist?("#{@@current_path}/env.yml")
+      @env= YAML.load(File.open("#{@@current_path}/env.yml"))
+      if @env[:ping_box_env] == "production"
+        @bucket = "pingbox-data"
+      else
+        @bucket = "pingbox-data-dev"
+      end
+    else
+    end
+
+    bucket = s3_service.buckets.find("#{@bucket}")
 
 
     # Copy to S3
