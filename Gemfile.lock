@@ -15,10 +15,13 @@ GEM
     method_source (0.8.1)
     minitest (4.7.5)
     multi_json (1.7.7)
+    proxies (0.2.1)
     pry (0.9.12.2)
       coderay (~> 1.0.5)
       method_source (~> 0.8)
       slop (~> 3.4)
+    s3 (0.3.21)
+      proxies (~> 0.2.0)
     slop (3.4.5)
     thread_safe (0.1.0)
       atomic
@@ -34,5 +37,6 @@ PLATFORMS
 DEPENDENCIES
   awesome_print
   pry
+  s3
   whenever
   xml-simple
