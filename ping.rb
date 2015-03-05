@@ -200,11 +200,13 @@ class PingData
   end
 
   def successful_find_by_host(host_name)
-    @successful_find_by_host ||= successful_pings.select{|a| a.host == host_name}
+    #@successful_find_by_host ||= successful_pings.select{|a| a.host == host_name}
+    successful_pings.select{|a| a.host == host_name}
   end
 
   def failed_find_by_host(host_name)
-    @failed_find_by_host ||= failed_pings.select{|a| a.host == host_name}
+    #@failed_find_by_host ||= failed_pings.select{|a| a.host == host_name}
+    failed_pings.select{|a| a.host == host_name}
   end
 
   def find_by_host_name(host_name)
