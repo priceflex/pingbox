@@ -448,3 +448,12 @@
 	from /usr/lib/ruby/1.9.1/rubygems/custom_require.rb:36:in `require'
 	from /usr/lib/ruby/1.9.1/rubygems/custom_require.rb:36:in `require'
 	from /home/pingbox/pingbox/test_case.rb:11:in `<main>'
+Asking server test case
+Transmmitting Data
+Reading /home/pingbox/pingbox/ping.yml
+Saving to S3
+Uploading file to s3
+Sent all data to s3
+Saved Files
+Asking server test case
+Transmmitting Data
