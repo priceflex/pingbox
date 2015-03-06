@@ -109,6 +109,8 @@ class TestCase
           %w{env.yml public_ip.yml}.each do |file|
             FileUtils.rm("#{@@current_path}/#{file}")
           end	
+          #Clear Old Ping Data
+          system("find #{@@current_path}/data/*.gz -type f -delete")
         end
         @clear_ping_data = false 
       end
