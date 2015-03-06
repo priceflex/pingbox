@@ -7,7 +7,9 @@
 require 'yaml'
 require 'net/http'
 require 'uri'
-require './send_to_s3.rb'
+require "#{@@current_path}/send_to_s3.rb"
+require "#{@@current_path}/ping.rb"
+
 
 class SpeedTest
 
@@ -65,8 +67,12 @@ class SpeedTest
       }
       }
       begin
-        #postData = Net::HTTP.post_form(URI.parse("http://ping.techrockstars.com/machine/#{machine[:machine_id]}/speed_test"),data)
-        postData = Net::HTTP.post_form(URI.parse("http://192.168.0.124:3000/machine/#{machine[:machine_id]}/speed_test"),data)
+        if Ping.env? == :production
+          postData = Net::HTTP.post_form(URI.parse("http://ping.techrockstars.com/machine/#{machine[:machine_id]}/speed_test"),data)
+        else
+          postData = Net::HTTP.post_form(URI.parse("http://192.168.0.124:3000/machine/#{machine[:machine_id]}/speed_test"),data)
+        end
+
       rescue
         puts "Cannot send results"
       end
