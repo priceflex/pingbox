@@ -1,7 +1,8 @@
-require 'aws-sdk'
-require './ping.rb'
-
 @@current_path = "#{File.dirname(__FILE__)}"
+
+require 'aws-sdk'
+require "#{@@current_path}/ping.rb"
+
 
 class SendToS3
 
