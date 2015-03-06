@@ -106,12 +106,11 @@ class TestCase
       if postData.code == "200" || @clear_ping_data
         PingData.new.clear_file
         if @clear_ping_data
-          # Delete all files in the data folder
-          FileUtils.rm("#{@@current_path}/data/*")
           # Delete all the env file and the public_ip file
           %w{env.yml public_ip.yml}.each do |file|
             FileUtils.rm("#{@@current_path}/#{file}")
           end	
+          # Delete all files in the data folder
           #Clear Old Ping Data
           system("find #{@@current_path}/data/*.gz -type f -delete")
         end
