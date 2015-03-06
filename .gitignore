@@ -19,3 +19,4 @@ ping.yml
 test_case.yml
 *.swp
 env.yml
+cron_log.log

@@ -12,11 +12,11 @@ require 's3'
 
 #this will parse the ping data
 class PingParser
-  def initialize(ping_data, test_case_id=0)
+  def initialize(ping_data, test_caseid=0)
     @ping_data = ping_data.split("\n")
     @ping_results = {}
     @ping_replys = []
-    @test_case_id = test_case_id
+    @test_case_id = test_caseid
     parse
   end
   def reply_times
@@ -24,6 +24,10 @@ class PingParser
   end
   def ping_replys
     @ping_replys
+  end
+
+  def test_case_id
+    @test_case_id
   end
 
   def statistics
@@ -40,6 +44,10 @@ class PingParser
 
   def packet_loss
     statistics.split(",").grep(/loss/).join.scan(/[\d]/).join
+  end
+
+  def rounded_time
+    Time.at(((time.to_i / 60.0).round * 60.0).to_i)
   end
 
   def time
@@ -110,6 +118,7 @@ class PingParser
       :max => max,
       :host=> host,
       :time => "#{time}",
+      :rounded_time => Time.at(((time.to_i / 60.0).round * 60.0).to_i),
       :transmitted_to_database => false,
       :test_case_id => "#{@test_case_id}"
     }
@@ -119,9 +128,29 @@ class PingParser
   def results
     @ping_results
   end
+
+  def calculate_averages
+    # calculate averages of pings in this file so we don't have to do it when caching.
+    puts "ok"
+
+  end
 end
 
 class Ping
+
+  def self.env?
+    current_path = "#{File.dirname(__FILE__)}"
+    if File.exist?("#{current_path}/env.yml")
+      @env= YAML.load(File.open("#{current_path}/env.yml"))
+      if @env[:ping_box_env] == "production"
+        return :production
+      else
+        return :development
+      end
+    else
+      puts "Enviroment file does not exist. Please create one."
+    end
+  end
 
   def initialize(options= {})
     options = {:host => "google.com", :count => 5}.merge(options)
@@ -159,6 +188,42 @@ class PingData
     @all_data
   end
 
+  def total_pings
+    @all_data
+  end
+
+  def failed_pings
+    @failed_pings ||= @all_data.select{|a| a.packet_loss =="100"}
+  end
+  def successful_pings 
+    @successful_pings ||= @all_data.select{|a| a.packet_loss =="0"}
+  end
+
+  def successful_find_by_host(host_name)
+    #@successful_find_by_host ||= successful_pings.select{|a| a.host == host_name}
+    successful_pings.select{|a| a.host == host_name}
+  end
+
+  def failed_find_by_host(host_name)
+    #@failed_find_by_host ||= failed_pings.select{|a| a.host == host_name}
+    failed_pings.select{|a| a.host == host_name}
+  end
+
+  def find_by_host_name(host_name)
+    @all_data.select{|a| a.host == host_name}
+  end
+
+
+  def sort_by_host(hosts)
+    hosts.group_by {|p| p.host}
+    # returns ["google.com", PingParser{:average => "12.00" ....}]
+  end
+
+  def sort_and_cache(host_pings)
+    host_pings.group_by { |p| p.rounded_time }.to_a.map{|a| { :time => a[0], :average => a[1].map(&:average).map(&:to_i).inject {|sum, x| sum + x} / a[1].size }}
+  end
+
+
   def load_file 
     parsed = begin
                if File.exist?("#{@@current_path}/ping.yml")
@@ -195,42 +260,40 @@ class PingData
     )
     begin
 
-    if File.exist?("#{@@current_path}/env.yml")
-      @env= YAML.load(File.open("#{@@current_path}/env.yml"))
-      if @env[:ping_box_env] == "production"
+      if Ping.env? == :production
         @bucket = "pingbox-data"
       else
         @bucket = "pingbox-data-dev"
       end
-    else
-    end
 
-    bucket = s3_service.buckets.find("#{@bucket}")
+      bucket = s3_service.buckets.find("#{@bucket}")
 
 
-    # Copy to S3
-    puts "Uploading file to s3"
-    # found_object.destroy
-    Dir.glob("#{@@current_path}/data/*.gz") do |file|
-      new_object = bucket.objects.build("#{File.basename(file)}")
-      new_object.content = open("#{file}")
-      new_object.save
-      if new_object.exists?
-         FileUtils.rm(file)
+      # Copy to S3
+      puts "Uploading file to s3"
+      # found_object.destroy
+      Dir.glob("#{@@current_path}/data/*.gz") do |file|
+        new_object = bucket.objects.build("#{File.basename(file)}")
+        new_object.content = open("#{file}")
+        new_object.save
+        if new_object.exists?
+          FileUtils.rm(file)
+        end
       end
-    end
-    puts "Sent all data to s3"
+      puts "Sent all data to s3"
     rescue
       puts "Error Sending to S3"
     end
   end
 
   def save_file
-    save_staging_file
-    sha_ping_file
-    zip_ping_file
-    puts "Saving to S3"
-    sent_all_files_to_s3
+    #    save_staging_file
+    #    sha_ping_file
+    #    zip_ping_file
+    #    puts "Saving to S3"
+    #    SendToS3.send_files
+
+    #    sent_all_files_to_s3
 
 
     #load_file
@@ -246,5 +309,7 @@ class PingData
   def save(data)
     @all_data << (data)
   end
+
 end
+
 

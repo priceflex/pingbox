@@ -6,6 +6,9 @@ exit unless DATA.flock(File::LOCK_NB | File::LOCK_EX)
 require 'rubygems'
 require 'ap'
 require "#{@@current_path}/ping"
+require "#{File.dirname(__FILE__)}/cached_ping.rb"
+require "#{File.dirname(__FILE__)}/save_to_yaml_file.rb"
+require "#{File.dirname(__FILE__)}/send_to_s3.rb"
 require 'net/http'
 require 'uri'
 require 'json'
@@ -189,6 +192,7 @@ class TestCase
   end
 
 
+
   def create_machine_file
 
     machine_data = {:machine_id => Time.now.to_i }   
@@ -288,10 +292,14 @@ class TestCase
       end
       sleep 1.5
     end
-    @ping_data.save_file  
+    cached_pings = CachedPing.new(@ping_data)
+    SaveToYmlFile.new("cached_pings.yml", cached_pings.calculate_pings)
+    SendToS3.send_files
+    #@ping_data.save_file 
     puts "Saved Files"
 
   end
+
 end
 
 tc = TestCase.new
