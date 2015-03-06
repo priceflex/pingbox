@@ -288,7 +288,6 @@ class TestCase
       end
       sleep 1.5
     end
-    #@ping_data.calculate_averages
     cached_pings = CachedPing.new(@ping_data)
     SaveToYmlFile.new("cached_pings.yml", cached_pings.calculate_pings)
     SendToS3.send_files

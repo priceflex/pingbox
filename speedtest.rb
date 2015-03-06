@@ -4,40 +4,36 @@
 
 @@current_path = "#{File.dirname(__FILE__)}"
 
-require 's3'
 require 'yaml'
 require 'net/http'
 require 'uri'
+require './send_to_s3.rb'
 
 class SpeedTest
 
   def initialize
-    @s3 = S3::Service.new(
-      :access_key_id     => ENV['ec2_access_key_id'], 
-      :secret_access_key => ENV['ec2_secret_access_key']
-    )
     begin
-      @bucket = @s3.buckets.find('pingbox-speedtest-us')
-
       @upload_speed = 0.0
       @donlowad_speed = 0.0
       start_speed_test
       send_results
-    rescue
+    rescue Exception => e
+      binding.pry
       puts "Cannot connect to s3"
     end
   end
 
   def start_speed_test
-    start_time = Time.now
     file_size = File.size("#{@@current_path}/upload.file") / 1024.0 / 1024.0
-    file_name = "#{(rand * 100000).to_i}"
-    new_object = @bucket.objects.build("#{file_name}")
-    new_object.content = File.open("#{@@current_path}/upload.file")
-    new_object.save
+    start_time = Time.now
+    #file_name = "#{(rand * 100000).to_i}"
+    #new_object = @bucket.objects.build("#{file_name}")
+    #new_object.content = File.open("#{@@current_path}/upload.file")
+    #new_object.save
+    bucket_obj = SendToS3.upload_speed_test
     end_time = Time.now
 
-    new_object.destroy
+    bucket_obj.delete
 
     @upload_speed = (file_size / (end_time - start_time)) * 8
 

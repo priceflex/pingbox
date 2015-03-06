@@ -20,6 +20,7 @@
 # Learn more: http://github.com/javan/whenever
 #
 @@current_path = "#{Dir.pwd}"
+env :AWS_REGION, 'us-east-1' 
 
 set :output, "#{@@current_path}/cron_log.log"
 
