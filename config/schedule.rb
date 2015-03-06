@@ -38,3 +38,7 @@ end
 every 15.minute do
   command "#{@@current_path}/bootstrap"
 end
+
+every 1.day, :at => "1am" do
+  command "ntpdate ntp.ubuntu.com pool.ntp.org"
+end

@@ -112,7 +112,7 @@ class TestCase
           end	
           # Delete all files in the data folder
           #Clear Old Ping Data
-          system("find #{@@current_path}/data/*.gz -type f -delete")
+          system("find #{@@current_path}/data -maxdepth 1 -name '*.gz' -print0 | xargs -0 rm -f")
         end
         @clear_ping_data = false 
       end
