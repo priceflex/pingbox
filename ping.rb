@@ -220,7 +220,7 @@ class PingData
   end
 
   def sort_and_cache(host_pings)
-    host_pings.group_by { |p| p.rounded_time }.to_a.map{|a| { :time => a[0], :average => a[1].map(&:average).map(&:to_i).inject {|sum, x| sum + x} / a[1].size }}
+    host_pings.group_by { |p| p.rounded_time }.to_a.map{|a| { :time => a[0], :average => a[1].map(&:average).map(&:to_i).inject {|sum, x| sum + x} / a[1].size, :count => a[1].size }}
   end
 
 
