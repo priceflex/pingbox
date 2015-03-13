@@ -21,7 +21,7 @@
 #
 @@current_path = "#{Dir.pwd}"
 
-set :output, "#{@@current_path}/cron_log.log"
+set :output, "#{@@current_path}/sudo_cron_log.log"
 
 every 1.day, :at => "1am" do
   command "ntpdate ntp.ubuntu.com pool.ntp.org"
