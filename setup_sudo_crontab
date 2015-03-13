@@ -1,0 +1,3 @@
+#!/bin/bash
+
+cd /home/pingbox/pingbox && /usr/local/bin/whenever --update --load-file /home/pingbox/pingbox/config/sudo_schedule.rb
