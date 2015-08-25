@@ -1,9 +1,10 @@
 $pingbox_root = "#{File.dirname(__FILE__)}/../.." unless $pingbox_root
 
 require 'yaml'
-#require "./hasher"
+require "#{$pingbox_root}/lib/pingbox/hasher"
 
 class SaveToYmlFile
+
   def initialize(filename, data)
     @filename = filename
     @data = data
@@ -11,7 +12,6 @@ class SaveToYmlFile
     save_staging_file
     sha_file
     zip_file
-
   end
 
   def save_staging_file

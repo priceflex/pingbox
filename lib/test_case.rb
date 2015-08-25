@@ -12,20 +12,16 @@ require 'xmlsimple'
 require 'socket'
 require "#{$pingbox_root}/lib/ping/ping"
 require "#{$pingbox_root}/lib/pingbox/cached_ping"
-require "#{$pingbox_root}/lib/pingbox/hasher"
 require "#{$pingbox_root}/lib/pingbox/save_to_yaml_file"
 require "#{$pingbox_root}/lib/pingbox/send_to_s3"
 
 class TestCase
   def initialize
     @amazon_s3 = SendToS3.new
-    get_env
-    @machine_data = nil
     @clear_ping_data = false
-    #@env= nil
-    #@url = ""
+    @machine_data = nil
     @nmap_address = nil
-    @nmap_dump 
+    get_env
     load_machine_data
   end
 
