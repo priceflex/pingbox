@@ -27,11 +27,13 @@ class SendToS3
     puts "Uploading file(s) to S3... \n"
 
     Dir.glob("#{$pingbox_root}/data/*.gz") do |file|
-      print "#{File.basename(file)[0...20]}... "
+      print "#{File.basename(file)[0...50]}... "
+
       if send_file(@ping_bucket, File.basename(file), file)
         puts "OK."
         FileUtils.rm(file) 
       end
+
     end
   rescue Exception => e
     puts "\nError transmitting data to S3: #{e.message}"
