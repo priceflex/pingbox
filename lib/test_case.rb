@@ -1,10 +1,7 @@
 #Locks so only one instance runs at at time
 exit unless DATA.flock(File::LOCK_NB | File::LOCK_EX)
 
-
-# this will place the current path at the (program's) root dir - /pingbox/pingbox so that mixed in classes
-# can share the current_path variable without stepping on each others toes.
-$pingbox_root = "#{File.dirname(__FILE__)}/.."
+$pingbox_root = "#{File.dirname(__FILE__)}/.." unless $pingbox_root
 
 require 'rubygems'
 require 'ap'
@@ -21,6 +18,7 @@ require "#{$pingbox_root}/lib/pingbox/send_to_s3"
 
 class TestCase
   def initialize
+    @amazon_s3 = SendToS3.new
     get_env
     @machine_data = nil
     @clear_ping_data = false
@@ -295,8 +293,7 @@ class TestCase
     end
     cached_pings = CachedPing.new(@ping_data)
     SaveToYmlFile.new("cached_pings.yml", cached_pings.calculate_pings)
-    SendToS3.send_files
-    #@ping_data.save_file 
+    @amazon_s3.upload_ping_files
     puts "Saved Files"
 
   end

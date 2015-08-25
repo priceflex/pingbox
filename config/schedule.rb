@@ -29,11 +29,11 @@ every 1.minute do
   command "ruby #{@@current_path}/lib/test_case.rb"
 end
 
-every 1.minutes do
+every 10.minutes do
   command "ruby #{@@current_path}/lib/tracert.rb"
 end
 
-every 10.minutes do
+every 30.minutes do
   command "ruby #{@@current_path}/lib/speedtest.rb"
 end
 

@@ -11,7 +11,7 @@ class TraceRoute
 
   attr_accessor :results, :ips
 
-  def initialize(ips=[])
+  def initialize(ips = [])
     @ips = ips
   end
 
@@ -19,9 +19,8 @@ class TraceRoute
     output = []
 
     @ips.each do |ip| 
-      print "Getting traceroute for #{ip}... "
+      puts "Getting traceroute for #{ip}... "
       output << `traceroute #{ip} -q 1 -w 1`
-      puts "done."
     end
 
     @results = output.join
@@ -39,7 +38,7 @@ class TraceRoute
       Net::HTTP.post_form(URI.parse(machine_url), data) 
       puts "Successfully sent traceroute data to #{machine_url}"
     else 
-      return puts "Machine/Test Case configuration files not found.  Exiting."
+      return puts "Machine/Test Case configuration files not found. Aborting traceroute."
     end
 
   rescue Exception => e
