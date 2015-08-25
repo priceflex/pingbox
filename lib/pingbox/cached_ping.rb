@@ -1,3 +1,4 @@
+#This builds a hash
 class CachedPing
 
   # CachedPing 

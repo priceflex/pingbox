@@ -1,12 +1,7 @@
+$pingbox_root = "#{File.dirname(__FILE__)}/../.." unless $pingbox_root
 
-@@current_path = "#{File.dirname(__FILE__)}"
-
-require 'pry'
-require 'ap'
 require 'yaml'
 require 'time'
-require "#{File.dirname(__FILE__)}/hasher.rb"
-require 's3'
 
 
 
@@ -139,14 +134,9 @@ end
 class Ping
 
   def self.env?
-    current_path = "#{File.dirname(__FILE__)}"
-    if File.exist?("#{current_path}/env.yml")
-      @env= YAML.load(File.open("#{current_path}/env.yml"))
-      if @env[:ping_box_env] == "production"
-        return :production
-      else
-        return :development
-      end
+    if File.exist?("#{$pingbox_root}/config/env.yml")
+      env = YAML.load(File.open("#{$pingbox_root}/config/env.yml"))
+      return env[:ping_box_env].to_sym
     else
       puts "Enviroment file does not exist. Please create one."
     end
@@ -226,11 +216,11 @@ class PingData
 
   def load_file 
     parsed = begin
-               if File.exist?("#{@@current_path}/ping.yml")
-                 @file_data = YAML.load(File.open("#{@@current_path}/ping.yml"))
+               if File.exist?("#{$pingbox_root}/ping.yml")
+                 @file_data = YAML.load(File.open("#{$pingbox_root}/ping.yml"))
                else
-                 FileUtils.touch("#{@@current_path}/ping.yml")
-                 @file_data = YAML.load(File.open("#{@@current_path}/ping.yml"))
+                 FileUtils.touch("#{$pingbox_root}/ping.yml")
+                 @file_data = YAML.load(File.open("#{$pingbox_root}/ping.yml"))
                end
              rescue ArgumentError => e  
                puts "Could not open file #{e.message}"
@@ -240,18 +230,18 @@ class PingData
 
   def clear_file
     data = nil
-    File.open("#{@@current_path}/ping.yml", "w+") {|f| f.write(data.to_yaml) }
+    File.open("#{$pingbox_root}/ping.yml", "w+") {|f| f.write(data.to_yaml) }
   end
 
   def save_staging_file
-    File.open("#{@@current_path}/ping.yml", "w+") {|f| f.write(@all_data.map(&:results).to_yaml) }
+    File.open("#{$pingbox_root}/ping.yml", "w+") {|f| f.write(@all_data.map(&:results).to_yaml) }
   end
   def sha_ping_file
-    @hash_file_name = Hasher.new("#{@@current_path}/ping.yml").hashsum
+    @hash_file_name = Hasher.new("#{$pingbox_root}/ping.yml").hashsum
   end
   def zip_ping_file
-    system("gzip -9 #{@@current_path}/ping.yml")
-    FileUtils.mv "#{@@current_path}/ping.yml.gz", "#{@@current_path}/data/#{@hash_file_name}.gz"
+    system("gzip -9 #{$pingbox_root}/ping.yml")
+    FileUtils.mv "#{$pingbox_root}/ping.yml.gz", "#{$pingbox_root}/data/#{@hash_file_name}.gz"
   end
   def sent_all_files_to_s3
     s3_service = S3::Service.new(
@@ -272,7 +262,7 @@ class PingData
       # Copy to S3
       puts "Uploading file to s3"
       # found_object.destroy
-      Dir.glob("#{@@current_path}/data/*.gz") do |file|
+      Dir.glob("#{$pingbox_root}/data/*.gz") do |file|
         new_object = bucket.objects.build("#{File.basename(file)}")
         new_object.content = open("#{file}")
         new_object.save
@@ -299,9 +289,9 @@ class PingData
     #load_file
     #if @file_data 
     #@file_data.concat(@all_data.map(&:results))
-    #File.open("#{@@current_path}/ping.yml", "w+") {|f| f.write(@file_data.to_yaml) }
+    #File.open("#{$pingbox_root}/ping.yml", "w+") {|f| f.write(@file_data.to_yaml) }
     #else
-    #File.open("#{@@current_path}/ping.yml", "w+") {|f| f.write(@all_data.map(&:results).to_yaml) }
+    #File.open("#{$pingbox_root}/ping.yml", "w+") {|f| f.write(@all_data.map(&:results).to_yaml) }
     #end
 
   end

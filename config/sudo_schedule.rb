@@ -19,14 +19,19 @@
 
 # Learn more: http://github.com/javan/whenever
 #
-@@current_path = "#{Dir.pwd}"
+$current_path = "#{Dir.pwd}"
 
-set :output, "#{@@current_path}/sudo_cron_log.log"
+set :output, "#{$current_path}/log/sudo_cron_log.log"
 
 every 1.day, :at => "1am" do
+  # sync system clock.
   command "ntpdate ntp.ubuntu.com pool.ntp.org"
 end
 
 every :sunday, :at => "2am" do
+  # remove cron_log file.
+  command "rm -rf #{$current_path}/log/cron_log.log"
+
+  # reboot the machine.
   command "/sbin/reboot"
 end

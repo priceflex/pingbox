@@ -2,21 +2,22 @@
 exit unless DATA.flock(File::LOCK_NB | File::LOCK_EX)
 
 
-@@current_path = "#{File.dirname(__FILE__)}"
+# this will place the current path at the (program's) root dir - /pingbox/pingbox so that mixed in classes
+# can share the current_path variable without stepping on each others toes.
+$pingbox_root = "#{File.dirname(__FILE__)}/.."
+
 require 'rubygems'
 require 'ap'
-require "#{@@current_path}/ping"
-require "#{File.dirname(__FILE__)}/cached_ping.rb"
-require "#{File.dirname(__FILE__)}/save_to_yaml_file.rb"
-require "#{File.dirname(__FILE__)}/send_to_s3.rb"
 require 'net/http'
 require 'uri'
 require 'json'
 require 'xmlsimple'
 require 'socket'
-
-# Put this in the cron job
-# */1 * * * *  /bin/bash -l -c 'cd /home/stevenprice/code/netdebug &&  ruby test_case.rb'
+require './ping/ping'
+require './pingbox/cached_ping'
+require './pingbox/hasher'
+require './pingbox/save_to_yaml_file'
+require './pingbox/send_to_s3'
 
 class TestCase
   def initialize
@@ -72,8 +73,8 @@ class TestCase
   def public_ip
 
 
-    if File.exist?("#{@@current_path}/public_ip.yml") 
-      @public_ip = YAML.load(File.open("#{@@current_path}/public_ip.yml"))[:public_ip]
+    if File.exist?("#{$pingbox_root}/config/public_ip.yml") 
+      @public_ip = YAML.load(File.open("#{$pingbox_root}/config/public_ip.yml"))[:public_ip]
     else 
       url = "http://ip.techrockstars.com/?format=xml"
       begin
@@ -82,7 +83,7 @@ class TestCase
         public_ip = {:public_ip => data["ipaddress"][0]}
         @public_ip = data["ipaddress"][0]
 
-        File.open("#{@@current_path}/public_ip.yml", "w+") {|f| f.write(public_ip.to_yaml) }
+        File.open("#{$pingbox_root}/config/public_ip.yml", "w+") {|f| f.write(public_ip.to_yaml) }
       rescue
         @public_ip = "Not available"
       end
@@ -111,11 +112,11 @@ class TestCase
         if @clear_ping_data
           # Delete all the env file and the public_ip file
           %w{env.yml public_ip.yml}.each do |file|
-            FileUtils.rm("#{@@current_path}/#{file}")
+            FileUtils.rm("#{$pingbox_root}/#{file}")
           end	
           # Delete all files in the data folder
           #Clear Old Ping Data
-          system("find #{@@current_path}/data -maxdepth 1 -name '*.gz' -print0 | xargs -0 rm -f")
+          system("find #{$pingbox_root}/data -maxdepth 1 -name '*.gz' -print0 | xargs -0 rm -f")
         end
         @clear_ping_data = false 
       end
@@ -166,11 +167,11 @@ class TestCase
 
       puts "Got test from server"
     rescue
-      if File.exist?("#{@@current_path}/test_case.yml")
-        machine_data= YAML.load(File.open("#{@@current_path}/test_case.yml"))
+      if File.exist?("#{$pingbox_root}/config/test_case.yml")
+        machine_data= YAML.load(File.open("#{$pingbox_root}/config/test_case.yml"))
       else
-        FileUtils.touch("#{@@current_path}/test_case.yml")
-        machine_data= YAML.load(File.open("#{@@current_path}/test_case.yml"))
+        FileUtils.touch("#{$pingbox_root}/config/test_case.yml")
+        machine_data= YAML.load(File.open("#{$pingbox_root}/config/test_case.yml"))
       end
 
       @ping_hosts = machine_data[:ping_hosts]
@@ -188,7 +189,7 @@ class TestCase
 
   def create_test_case_file
     test_case = {:ping_hosts => @ping_hosts, :ping_times => @ping_times, :test_case_id=> @test_case_id, :nmap_address => @nmap_address}
-    File.open("#{@@current_path}/test_case.yml", "w+") {|f| f.write(test_case.to_yaml) }
+    File.open("#{$pingbox_root}/config/test_case.yml", "w+") {|f| f.write(test_case.to_yaml) }
   end
 
 
@@ -206,11 +207,11 @@ class TestCase
     ap postData
     if postData.code == "200"
       PingData.new.clear_file
-      File.open("#{@@current_path}/machine.yml", "w+") {|f| f.write(machine_data.to_yaml) }
+      File.open("#{$pingbox_root}/config/machine.yml", "w+") {|f| f.write(machine_data.to_yaml) }
 
       #clear out all ping.yml and test_case.yml file
       %w{ping.yml test_case.yml env.yml public_ip.yml}.each do |file|
-        FileUtils.rm("#{@@current_path}/#{file}")
+        FileUtils.rm("#{$pingbox_root}/config/#{file}")
       end
       exit
     end
@@ -219,12 +220,12 @@ class TestCase
 
   def create_env_file(env)
     data = {:ping_box_env => env}
-    File.open("#{@@current_path}/env.yml", "w+") {|f| f.write(data.to_yaml) }
+    File.open("#{$pingbox_root}/config/env.yml", "w+") {|f| f.write(data.to_yaml) }
   end
 
   def get_env
-    if File.exist?("#{@@current_path}/env.yml")
-      @env= YAML.load(File.open("#{@@current_path}/env.yml"))
+    if File.exist?("#{$pingbox_root}/config/env.yml")
+      @env= YAML.load(File.open("#{$pingbox_root}/config/env.yml"))
       if @env[:ping_box_env] == "production"
         @url = "http://ping.techrockstars.com" 
       else
@@ -239,11 +240,11 @@ class TestCase
   def load_machine_data 
     parsed = begin
 
-               if File.exist?("#{@@current_path}/machine.yml")
-                 @machine_data= YAML.load(File.open("#{@@current_path}/machine.yml"))
+               if File.exist?("#{$pingbox_root}/config/machine.yml")
+                 @machine_data= YAML.load(File.open("#{$pingbox_root}/config/machine.yml"))
                else
                  create_machine_file
-                 @machine_data= YAML.load(File.open("#{@@current_path}/machine.yml"))
+                 @machine_data= YAML.load(File.open("#{$pingbox_root}/config/machine.yml"))
                end
              rescue ArgumentError => e  
                puts "Could not open file #{e.message}"

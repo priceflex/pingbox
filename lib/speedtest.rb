@@ -2,35 +2,32 @@
 
 #fallocate -l 5M upload.file
 
-@@current_path = "#{File.dirname(__FILE__)}"
+$pingbox_root = "#{File.dirname(__FILE__)}/../.." unless $pingbox_root
 
 require 'yaml'
 require 'net/http'
 require 'uri'
-require "#{@@current_path}/send_to_s3.rb"
-require "#{@@current_path}/ping.rb"
-
+require "ping/ping"
+require "pingbox/send_to_s3"
 
 class SpeedTest
 
   def initialize
-    begin
-      @upload_speed = 0.0
-      @donlowad_speed = 0.0
-      start_speed_test
-      send_results
-    rescue Exception => e
-      binding.pry
-      puts "Cannot connect to s3"
-    end
+    @upload_speed = 0.0
+    @donlowad_speed = 0.0
+    start_speed_test
+    send_results
+  rescue Exception => e
+    puts "Cannot connect to s3: #{e.message}"
+    e.backtrace.each { |m| puts "\tfrom #{m}" }
   end
 
   def start_speed_test
-    file_size = File.size("#{@@current_path}/upload.file") / 1024.0 / 1024.0
+    file_size = File.size("#{$pingbox_root}/upload.file") / 1024.0 / 1024.0
     start_time = Time.now
     #file_name = "#{(rand * 100000).to_i}"
     #new_object = @bucket.objects.build("#{file_name}")
-    #new_object.content = File.open("#{@@current_path}/upload.file")
+    #new_object.content = File.open("#{$pingbox_root}/upload.file")
     #new_object.save
     bucket_obj = SendToS3.upload_speed_test
     end_time = Time.now
@@ -42,9 +39,9 @@ class SpeedTest
 
 
     start_time = Time.now
-    system("wget https://pingbox-speedtest-us.s3.amazonaws.com/5mb-download.file -O #{@@current_path}/5mb-download.file")
+    system("wget https://pingbox-speedtest-us.s3.amazonaws.com/5mb-download.file -O #{$pingbox_root}/5mb-download.file")
     end_time = Time.now
-    system("rm #{@@current_path}/5mb-download.file")
+    system("rm #{$pingbox_root}/5mb-download.file")
 
 
     @download_speed = (file_size / (end_time - start_time)) * 8
@@ -52,9 +49,9 @@ class SpeedTest
   end
 
   def send_results
-    if File.exist?("#{@@current_path}/machine.yml") && File.exist?("#{@@current_path}/test_case.yml")
-      test = YAML.load(File.open("#{@@current_path}/test_case.yml"))
-      machine = YAML.load(File.open("#{@@current_path}/machine.yml"))
+    if File.exist?("#{$pingbox_root}/config/machine.yml") && File.exist?("#{$pingbox_root}/config/test_case.yml")
+      test = YAML.load(File.open("#{$pingbox_root}/config/test_case.yml"))
+      machine = YAML.load(File.open("#{$pingbox_root}/config/machine.yml"))
 
 
       data = {
@@ -85,4 +82,3 @@ class SpeedTest
 end
 
 SpeedTest.new
-

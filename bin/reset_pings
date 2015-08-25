@@ -1,0 +1,3 @@
+#!/bin/bash
+
+cd /home/pingbox/pingbox/config && rm ping.yml 
