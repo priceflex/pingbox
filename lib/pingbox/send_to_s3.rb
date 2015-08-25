@@ -1,7 +1,6 @@
 $pingbox_root = "#{File.dirname(__FILE__)}/../.." unless $pingbox_root
 
 require 'aws-sdk'
-#require "../ping/ping" 
 
 class SendToS3
 

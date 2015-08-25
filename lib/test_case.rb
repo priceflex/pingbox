@@ -13,11 +13,11 @@ require 'uri'
 require 'json'
 require 'xmlsimple'
 require 'socket'
-require './ping/ping'
-require './pingbox/cached_ping'
-require './pingbox/hasher'
-require './pingbox/save_to_yaml_file'
-require './pingbox/send_to_s3'
+require "#{$pingbox_root}/lib/ping/ping"
+require "#{$pingbox_root}/lib/pingbox/cached_ping"
+require "#{$pingbox_root}/lib/pingbox/hasher"
+require "#{$pingbox_root}/lib/pingbox/save_to_yaml_file"
+require "#{$pingbox_root}/lib/pingbox/send_to_s3"
 
 class TestCase
   def initialize

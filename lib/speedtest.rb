@@ -2,13 +2,13 @@
 
 #fallocate -l 5M upload.file
 
-$pingbox_root = "#{File.dirname(__FILE__)}/../.." unless $pingbox_root
+$pingbox_root = "#{File.dirname(__FILE__)}/.." unless $pingbox_root
 
 require 'yaml'
-require 'net/http'
 require 'uri'
-require "ping/ping"
-require "pingbox/send_to_s3"
+require 'net/http'
+require "#{$pingbox_root}/lib/ping/ping"
+require "#{$pingbox_root}/lib/pingbox/send_to_s3"
 
 class SpeedTest
 

@@ -25,15 +25,15 @@ env :AWS_REGION, 'us-east-1'
 
 set :output, "#{@@current_path}/log/cron_log.log"
 
-#every 1.minute do
-  #command "ruby #{@@current_path}/lib/test_case.rb"
-#end
+every 1.minute do
+  command "ruby #{@@current_path}/lib/test_case.rb"
+end
 
-every 10.minutes do
+every 1.minutes do
   command "ruby #{@@current_path}/lib/tracert.rb"
 end
 
-every 1.minute do
+every 10.minutes do
   command "ruby #{@@current_path}/lib/speedtest.rb"
 end
 

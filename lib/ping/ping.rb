@@ -1,9 +1,6 @@
 $pingbox_root = "#{File.dirname(__FILE__)}/../.." unless $pingbox_root
 
-require 'yaml'
 require 'time'
-
-
 
 #this will parse the ping data
 class PingParser

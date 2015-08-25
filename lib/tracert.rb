@@ -1,11 +1,11 @@
-$pingbox_root = "#{File.dirname(__FILE__)}/../.." unless $pingbox_root
+$pingbox_root = "#{File.dirname(__FILE__)}/.." unless $pingbox_root
 $config_dir = "#{$pingbox_root}/config"
 
-require 'ping/ping'
 require 'yaml'
-require 'net/http'
 require 'uri'
 require 'pry'
+require 'net/http'
+require "#{$pingbox_root}/lib/ping/ping"
 
 class TraceRoute
 
