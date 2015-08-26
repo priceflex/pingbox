@@ -13,24 +13,21 @@ class SpeedTest
 
   def initialize
     @amazon_s3 = SendToS3.new
-    upload_test
-    download_test
-    send_results
-  rescue Exception => e
-    puts "Error in speed-test: #{e.message}"
-    e.backtrace.each { |m| puts "\tfrom #{m}" }
   end
 
   def upload_test
+    puts "Performing upload operation, please wait..."
     file_size = File.size("#{$pingbox_root}/upload.file") / 1024.0 / 1024.0
     start_time = Time.now
     bucket_obj = @amazon_s3.upload_speed_test
     end_time = Time.now
     bucket_obj.delete
     @upload_speed = (file_size / (end_time - start_time)) * 8
+    puts "Upload complete in #{(end_time - start_time).round(3)}s / #{@upload_speed.round(3)} Mb/s\n\n"
   end
 
   def download_test
+    puts "Performing download operation, please wait..."
     start_time = Time.now
     system("wget https://pingbox-speedtest-us.s3.amazonaws.com/5mb-download.file -O #{$pingbox_root}/5mb-download.file")
     end_time = Time.now
@@ -64,4 +61,13 @@ class SpeedTest
   end
 end
 
-SpeedTest.new
+begin
+  puts "Initializing speed test."
+  s = SpeedTest.new
+  s.upload_test
+  s.download_test
+  s.send_results
+rescue Exception => e
+  puts "Error in speed-test: #{e.message}"
+  e.backtrace.each { |m| puts "\tfrom #{m}" }
+end
