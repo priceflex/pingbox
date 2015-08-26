@@ -23,15 +23,15 @@ require "#{$pingbox_root}/lib/pingbox/send_to_s3"
       # @amazon_s3 => SendToS3.new
       # @clear_ping_data => var sent from user's browser
 
-   # get_env
+   # get_env => determines whether this is dev/production
       # @env => production/development environment
       # @url => ping.techrockstars.com/192.168.0.124:3000 (production / dev)
       # create_env_file (if it doesn't exist - default to production)
 
-   # load_machine_data
+   # load_machine_data => read machine data from machine.yml
       # create_machine_file (if doesn't exist)
 
-   # run
+   # run => perform monitor/ping tasks
      # get_work_from_server
         # @ping_hosts
         # @ping_times
@@ -41,6 +41,7 @@ require "#{$pingbox_root}/lib/pingbox/send_to_s3"
         # create_test_case_file
 
      # report_to_monitor
+        # private_ip
         # public_ip
         # transmit_monitor
      # start_work
@@ -54,6 +55,12 @@ class TestCase
     get_env
     @url = "http://192.168.0.124:3000" 
     load_machine_data
+  end
+
+  def run
+    get_work_from_server
+    report_to_monitor
+    start_work
   end
 
   def get_env
@@ -108,110 +115,6 @@ class TestCase
     end
   end
 
-  def run
-    get_work_from_server
-    report_to_monitor
-    start_work
-  end
-
-  def report_to_monitor
-    @ifconfig_dump = `/sbin/ifconfig`
-    @ps_aux_dump = `/bin/ps aux`
-    @du_sh_dump = `/usr/bin/du -sh /home/pingbox/pingbox/data`
-    @nmap_dump = `/usr/bin/nmap -sP #{@nmap_address}` if @nmap_address
-
-    begin
-      @private_ip = Socket.ip_address_list.detect{ |intf| intf.ipv4_private? }.ip_address 
-    rescue Exception => e
-      puts "Error getting private IP: #{e.message}"
-      e.backtrace.each { |m| puts "\tfrom #{m}" }
-    end
-
-    public_ip
-    transmit_monitor
-  end
-
-  def transmit_monitor 
-    data = {
-      :_method        => :put,
-      :ifconfig_dump  => @ifconfig_dump,
-      :ps_aux_dump    => @ps_aux_dump,
-      :du_sh_dump     => @du_sh_dump,
-      :private_ip     => @private_ip,
-      :public_ip      => @public_ip,
-      :nmap_dump      => @nmap_dump 
-    }
-
-    puts "Transmitting monitor."
-    postData = Net::HTTP.post_form(URI.parse("#{@url}/machine/#{@machine_data[:machine_id]}"), data)
-
-    if postData.code == "200" 
-      puts "Monitor transmitted OK."
-    else
-      puts "Monitor not transmitted.  Status code from server: #{postData.code}"
-    end
-
-  rescue Exception => e
-    puts "Error transmitting monitor: #{e.message}"
-    e.backtrace.each { |m| puts "\tfrom #{m}" }
-  end
-
-  def public_ip
-    if File.exist?("#{$pingbox_root}/config/public_ip.yml") 
-      @public_ip = YAML.load(File.open("#{$pingbox_root}/config/public_ip.yml"))[:public_ip]
-    else 
-      url = "http://ip.techrockstars.com/?format=xml"
-      begin
-        xml_data = Net::HTTP.get_response(URI.parse(url)).body
-        data = XmlSimple.xml_in(xml_data)
-        public_ip = {:public_ip => data["ipaddress"][0]}
-        @public_ip = data["ipaddress"][0]
-
-        File.open("#{$pingbox_root}/config/public_ip.yml", "w+") {|f| f.write(public_ip.to_yaml) }
-      rescue
-        @public_ip = "Not available"
-      end
-    end 
-  end
-
-
-  def transmit_to_database
-    # Sends data to glitch.techrockstars.com/data
-    # packets => [{ :packets_transmitted => '1', :packets_recieved => '1', :packet_errors => '', :completion_time => '0', :min => "0.016", :average => "0.016", :max => "0.016", :host => "localhost", :time => "2013-02-24 01:18:26.000000000 -08:00"}]
-
-    data = {}
-    #url = "http://ping.techrockstars.com/data" 
-    #url = "http://glitch.techrockstars.com/data"
-    @file_data = PingData.new.load_file.to_json
-    data = {:packets => @file_data, :machine_id => @machine_data[:machine_id] }
-    begin
-      postData = Net::HTTP.post_form(URI.parse(@url), data)
-
-      #postData.read_timeout = 500
-
-      # Once a 200 is received then remove records from file
-      if postData.code == "200" || @clear_ping_data
-        PingData.new.clear_file
-        if @clear_ping_data
-          # Delete all the env file and the public_ip file
-          %w{env.yml public_ip.yml}.each do |file|
-            FileUtils.rm("#{$pingbox_root}/#{file}")
-          end	
-          # Delete all files in the data folder
-          #Clear Old Ping Data
-          system("find #{$pingbox_root}/data -maxdepth 1 -name '*.gz' -print0 | xargs -0 rm -f")
-        end
-        @clear_ping_data = false 
-      end
-    rescue
-    end
-
-  end
-
-  def to_boolean(str)
-    str == 'true'
-  end
-
   def get_work_from_server
     # Send @machine_data[:machine_id] to glitch.techrockstars.com/machine/:machine_id
     # Reply will be the work that it should be preformed
@@ -259,6 +162,103 @@ class TestCase
     end
   end
 
+  def report_to_monitor
+    puts "Gathering monitor data..."
+    @ifconfig_dump = `/sbin/ifconfig`
+    @ps_aux_dump = `/bin/ps aux`
+    @du_sh_dump = `/usr/bin/du -sh /home/pingbox/pingbox/data`
+
+    # eventually this needs to be extracted to be called from its own file.
+    @nmap_dump = `/usr/bin/nmap -sP #{@nmap_address}` if @nmap_address 
+
+    private_ip
+    public_ip
+    transmit_monitor
+  end
+
+  def private_ip
+    @private_ip = Socket.ip_address_list.detect{ |intf| intf.ipv4_private? }.ip_address 
+  rescue Exception => e
+    puts "Error getting private IP: #{e.message}"
+    e.backtrace.each { |m| puts "\tfrom #{m}" }
+  end
+
+  def public_ip
+    if File.exist?("#{$pingbox_root}/config/public_ip.yml") 
+      @public_ip = YAML.load(File.open("#{$pingbox_root}/config/public_ip.yml"))[:public_ip]
+    else 
+      url = "http://ip.techrockstars.com/?format=xml"
+      begin
+        xml_data = Net::HTTP.get_response(URI.parse(url)).body
+        data = XmlSimple.xml_in(xml_data)
+        public_ip = { :public_ip => data["ipaddress"][0] }
+        @public_ip = data["ipaddress"][0]
+
+        File.open("#{$pingbox_root}/config/public_ip.yml", "w+") {|f| f.write(public_ip.to_yaml) }
+      rescue
+        @public_ip = "Not available"
+      end
+    end 
+  end
+
+  def transmit_monitor 
+    data = {
+      :_method        => :put,
+      :ifconfig_dump  => @ifconfig_dump,
+      :ps_aux_dump    => @ps_aux_dump,
+      :du_sh_dump     => @du_sh_dump,
+      :private_ip     => @private_ip,
+      :public_ip      => @public_ip,
+      :nmap_dump      => @nmap_dump 
+    }
+
+    puts "Transmitting monitor."
+    postData = Net::HTTP.post_form(URI.parse("#{@url}/machine/#{@machine_data[:machine_id]}"), data)
+
+    if postData.code == "200" 
+      puts "Monitor transmitted OK."
+    else
+      puts "Monitor not transmitted.  Status code from server: #{postData.code}"
+    end
+
+  rescue Exception => e
+    puts "Error transmitting monitor: #{e.message}"
+    e.backtrace.each { |m| puts "\tfrom #{m}" }
+  end
+
+  def transmit_to_database
+    # Sends data to glitch.techrockstars.com/data
+    # packets => [{ :packets_transmitted => '1', :packets_recieved => '1', :packet_errors => '', :completion_time => '0', :min => "0.016", :average => "0.016", :max => "0.016", :host => "localhost", :time => "2013-02-24 01:18:26.000000000 -08:00"}]
+
+    data = {}
+    #url = "http://ping.techrockstars.com/data" 
+    #url = "http://glitch.techrockstars.com/data"
+    @file_data = PingData.new.load_file.to_json
+    data = {:packets => @file_data, :machine_id => @machine_data[:machine_id] }
+    begin
+      postData = Net::HTTP.post_form(URI.parse(@url), data)
+
+      #postData.read_timeout = 500
+
+      # Once a 200 is received then remove records from file
+      if postData.code == "200" || @clear_ping_data
+        PingData.new.clear_file
+        if @clear_ping_data
+          # Delete all the env file and the public_ip file
+          %w{env.yml public_ip.yml}.each do |file|
+            FileUtils.rm("#{$pingbox_root}/#{file}")
+          end	
+          # Delete all files in the data folder
+          #Clear Old Ping Data
+          system("find #{$pingbox_root}/data -maxdepth 1 -name '*.gz' -print0 | xargs -0 rm -f")
+        end
+        @clear_ping_data = false 
+      end
+    rescue
+    end
+
+  end
+
   def create_test_case_file
     test_case = {
       :ping_hosts   => @ping_hosts,
@@ -267,55 +267,55 @@ class TestCase
       :nmap_address => @nmap_address
     }
 
-    File.open("#{$pingbox_root}/config/test_case.yml", "w+") {|f| f.write(test_case.to_yaml) }
-  end
-
-  def time_first_ping
-    @start_time = Time.now
-    @ping_data = PingData.new
-
-    ping = Ping.new
-    @ping_hosts.each do |ip|
-      ping.count(1)
-      ping.hostname ip
-      ping.ping
-    end
-    ping.pings.each do |ping|
-      data = PingParser.new(ping, @test_case_id)
-      @ping_data.save(data)
-    end
-    #@ping_data.save_file
-
-    sleep 1.5
-
-    @end_time = Time.now
-    return @end_time - @start_time
+    File.open("#{$pingbox_root}/config/test_case.yml", "w+") { |f| f.write(test_case.to_yaml) }
   end
 
   def start_work
+    puts "Starting ping process."
     @ping_times = (50/ time_first_ping).round
-
-
     @ping_data = PingData.new
 
-    @ping_times.times do
-      ping = Ping.new
-      @ping_hosts.each do |ip|
-        ping.count(1)
-        ping.hostname ip
-        ping.ping
-      end
-      ping.pings.each do |ping|
-        data = PingParser.new(ping, @test_case_id)
-        @ping_data.save(data)
-      end
-      sleep 1.5
+    puts "Ping Hosts: #{@ping_hosts.join(", ")}"
+
+    # this would be a good place to add threading
+    @ping_times.times do |i|
+      puts "#{@ping_times - i} requests remain..."
+      ping_all_hosts
     end
+
     cached_pings = CachedPing.new(@ping_data)
     SaveToYmlFile.new("cached_pings.yml", cached_pings.calculate_pings)
     @amazon_s3.upload_ping_files
     puts "Saved Files"
+  end
 
+  def ping_all_hosts
+    ping = Ping.new
+
+    @ping_hosts.each do |ip|
+      ping.count = 1
+      ping.hostname = ip
+      ping.perform_ping
+    end
+
+    ping.pings.each do |ping|
+      data = PingParser.new(ping, @test_case_id)
+      @ping_data.save(data)
+    end
+
+    sleep 1.5
+  end
+
+  def time_first_ping
+    start_time = Time.now
+    @ping_data = PingData.new
+    ping_all_hosts
+    end_time = Time.now
+    return end_time - start_time
+  end
+
+  def to_boolean(str)
+    str == 'true'
   end
 
 end

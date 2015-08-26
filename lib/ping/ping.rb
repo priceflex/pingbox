@@ -125,6 +125,15 @@ end
 
 class Ping
 
+  attr_accessor :hostname, :count, :pings
+
+  def initialize(options = {})
+    options = {:host => "google.com", :count => 5}.merge(options)
+    @pings = []
+    @hostname = options[:host] 
+    @count = options[:count] 
+  end
+
   def self.env?
     if File.exist?("#{$pingbox_root}/config/env.yml")
       env = YAML.load(File.open("#{$pingbox_root}/config/env.yml"))
@@ -135,28 +144,9 @@ class Ping
     end
   end
 
-  def initialize(options= {})
-    options = {:host => "google.com", :count => 5}.merge(options)
-    @pings = []
-    @hostname = options[:host] 
-    @count = options[:count] 
-  end
-
-  def hostname(host)
-    @hostname = host 
-  end
-
-  def count(times)
-    @count= times
-  end
-
-  def ping
+  def perform_ping
     @time = Time.now
     @pings << `ping #{@hostname} -c #{@count}` + "-----Time Started #{@time} \n" + "----- Host #{@hostname}" 
-  end
-
-  def pings
-    @pings
   end
 
 end
