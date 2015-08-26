@@ -19,6 +19,7 @@
 
 # Learn more: http://github.com/javan/whenever
 #
+
 $current_path = "#{Dir.pwd}"
 
 set :output, "#{$current_path}/log/sudo_cron_log.log"

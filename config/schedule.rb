@@ -20,28 +20,28 @@
 # Learn more: http://github.com/javan/whenever
 #
 
-@@current_path = "#{Dir.pwd}"
-env :AWS_REGION, 'us-east-1' 
+$current_path = "#{Dir.pwd}"
 
-set :output, "#{@@current_path}/log/cron_log.log"
+env :AWS_REGION, 'us-east-1' 
+set :output, "#{$current_path}/log/cron_log.log"
 
 every 1.minute do
-  command "ruby #{@@current_path}/lib/test_case.rb"
+  command "ruby #{$current_path}/lib/test_case.rb"
 end
 
 every 10.minutes do
-  command "ruby #{@@current_path}/lib/tracert.rb"
+  command "ruby #{$current_path}/lib/tracert.rb"
 end
 
 every 30.minutes do
-  command "ruby #{@@current_path}/lib/speedtest.rb"
+  command "ruby #{$current_path}/lib/speedtest.rb"
 end
 
 # every 1.minute do
-#  command "ruby #{@@current_path}/lib/nmap.rb"
+#  command "ruby #{$current_path}/lib/nmap.rb"
 # end
 
 #every 15.minutes do
-  #command "#{@@current_path}/bin/bootstrap"
+  #command "#{$current_path}/bin/bootstrap"
 #end
 

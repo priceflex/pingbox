@@ -1,9 +1,12 @@
-#Locks so only one instance runs at at time
+# Locks so only one instance runs at at time
 exit unless DATA.flock(File::LOCK_NB | File::LOCK_EX)
 
 $pingbox_root = "#{File.dirname(__FILE__)}/.." unless $pingbox_root
+$config_dir = "#{$pingbox_root}/config"
 
 require 'rubygems'
+require 'pry'
+require 'fileutils'
 require 'ap'
 require 'net/http'
 require 'uri'
@@ -15,18 +18,99 @@ require "#{$pingbox_root}/lib/pingbox/cached_ping"
 require "#{$pingbox_root}/lib/pingbox/save_to_yaml_file"
 require "#{$pingbox_root}/lib/pingbox/send_to_s3"
 
+# order of events and instance variables within: 
+   # initialize
+      # @amazon_s3 => SendToS3.new
+      # @clear_ping_data => var sent from user's browser
+
+   # get_env
+      # @env => production/development environment
+      # @url => ping.techrockstars.com/192.168.0.124:3000 (production / dev)
+      # create_env_file (if it doesn't exist - default to production)
+
+   # load_machine_data
+      # create_machine_file (if doesn't exist)
+
+   # run
+     # get_work_from_server
+        # @ping_hosts
+        # @ping_times
+        # @test_case_id
+        # @clear_ping_data
+        # @nmap_address
+        # create_test_case_file
+
+     # report_to_monitor
+        # public_ip
+        # transmit_monitor
+     # start_work
+   # transmit_to_database
+
 class TestCase
+
   def initialize
     @amazon_s3 = SendToS3.new
     @clear_ping_data = false
-    @machine_data = nil
-    @nmap_address = nil
     get_env
     load_machine_data
   end
 
+  def get_env
+    @env = Ping.env?
+    if @env == :production
+      @url = "http://ping.techrockstars.com" 
+    elsif @env == :development
+      #@url = "http://dev2.techrockstars.com:3000" 
+      @url = "http://192.168.0.124:3000" 
+    else 
+      @env = :production
+      create_env_file(@env.to_s) # production by default
+    end
+  end
+
+  def create_env_file(env)
+    File.open("#{$pingbox_root}/config/env.yml", "w+") { |f| f.write({ ping_box_env: env }.to_yaml) }
+  end
+
+  def load_machine_data 
+    create_machine_file unless File.exist?("#{$pingbox_root}/config/machine.yml")
+    @machine_data = YAML.load(File.open("#{$pingbox_root}/config/machine.yml"))
+  rescue
+    puts "Can't read machine.yml file."
+  ensure
+     return @machine_data
+  end
+
+  def create_machine_file
+    # essentially creates a new machine in the database by resetting its "machine_id"
+    # to the current time.to_i
+
+    machine_data = { :machine_id => Time.now.to_i }   
+    url = "#{@url}/machine"
+    #@file_data = PingData.new.load_file.to_json
+
+    postData = Net::HTTP.post_form(URI.parse(url), { system_id: machine_data[:machine_id] })
+
+    ap postData
+
+    # Once a 200 is received then remove records from file
+    if postData.code == "200"
+      PingData.new.clear_file
+      File.open("#{$pingbox_root}/config/machine.yml", "w+") {|f| f.write(machine_data.to_yaml) }
+
+      # clear out all ping.yml and test_case.yml file
+        # do these get recreated on the next go-around? -EW
+      %w{ping.yml test_case.yml env.yml public_ip.yml}.each do |file|
+        puts "Removed #{file}" if FileUtils.rm("#{$pingbox_root}/config/#{file}") rescue puts "Can't remove #{file}. Can't find it."
+      end
+
+      # why does it need to exit the process after creating this file? -EW
+      exit
+    end
+  end
+
   def run
-    get_work_from_host
+    get_work_from_server
     report_to_monitor
     start_work
   end
@@ -51,22 +135,29 @@ class TestCase
   end
 
   def transmit_monitor 
-    data = {:_method => :put, :ifconfig_dump => @ifconfig_dump, :ps_aux_dump => @ps_aux_dump, :du_sh_dump => @du_sh_dump, :private_ip => @private_ip, :public_ip=> @public_ip, :nmap_dump => @nmap_dump }
-    begin
-      puts "Transmmitting Data"
-      postData = Net::HTTP.post_form(URI.parse("#{@url}/machine/#{@machine_data[:machine_id]}"), data)
+    data = {
+      :_method        => :put,
+      :ifconfig_dump  => @ifconfig_dump,
+      :ps_aux_dump    => @ps_aux_dump,
+      :du_sh_dump     => @du_sh_dump,
+      :private_ip     => @private_ip,
+      :public_ip      => @public_ip,
+      :nmap_dump      => @nmap_dump 
+    }
 
-      if postData.code == "200" 
-        #Maybe output to log or something
-        puts "Transmitted Monitor OK"
-      end
-    rescue
+    puts "Transmitting monitor."
+    postData = Net::HTTP.post_form(URI.parse("#{@url}/machine/#{@machine_data[:machine_id]}"), data)
+    if postData.code == "200" 
+      puts "Monitor transmitted OK."
+    else
+      puts "Monitor not transmitted.  Status code from server: #{postData.code}"
     end
+  rescue Exception => e
+    puts "Error transmitting monitor: #{e.message}"
+    e.backtrace.each { |m| puts "\tfrom #{m}" }
   end
 
   def public_ip
-
-
     if File.exist?("#{$pingbox_root}/config/public_ip.yml") 
       @public_ip = YAML.load(File.open("#{$pingbox_root}/config/public_ip.yml"))[:public_ip]
     else 
@@ -82,7 +173,6 @@ class TestCase
         @public_ip = "Not available"
       end
     end 
-
   end
 
 
@@ -123,127 +213,53 @@ class TestCase
     str == 'true'
   end
 
-  def get_work_from_host 
-
-
+  def get_work_from_server
     # Send @machine_data[:machine_id] to glitch.techrockstars.com/machine/:machine_id
     # Reply will be the work that it should be preformed
     # "ips" => ["4.2.2.1", "192.168.1.1", "google.com"],
     # "times_per_minute" => "6", # 20max per ip. In this case 6 because of a 3 second wait for non responsiveness
-    # "speedtest_urls" => ["https://someawesome-server.com"],
-    # 
-    # Save response to file work.yml 
-    #
-    #
-    #@ping_times = 6
-    #@ping_hosts = ["4.2.2.1", "localhost"]
-    #@test_case_id = 1
-    #
-    #
-    #if errors out then load to file
-    #
 
-    begin
-      puts "Asking server test case"
-      url = "#{@url}/machine/#{@machine_data[:machine_id]}/test_cases.xml"
-      #url = "http://glitch.techrockstars.com/"
-      xml_data = Net::HTTP.get_response(URI.parse(url)).body
-      data = XmlSimple.xml_in(xml_data) 
+    print "Requesting test case information from server... "
 
-      timeout_in_seconds = 3
+    url = "#{@url}/machine/#{@machine_data[:machine_id]}/test_cases.xml"
+    xml_data = Net::HTTP.get_response(URI.parse(url)).body
+    test_case_data = XmlSimple.xml_in(xml_data) 
 
-      @ping_hosts = data["ping-hosts-addresses"][0].split("\n")
-      @ping_times = (60 / timeout_in_seconds) / @ping_hosts.size
-      @test_case_id = data["id"][0]["content"].to_i
-      @clear_ping_data = to_boolean(data["reset-ping-data"][0]["content"])
-      @nmap_address = data["nmap-address"][0]
+    timeout_in_seconds = 3
+
+binding.pry
+    @ping_hosts = test_case_data["ping-hosts-addresses"][0].split("\n")
+    @ping_times = (60 / timeout_in_seconds) / @ping_hosts.size
+    @test_case_id = test_case_data["id"][0]["content"].to_i
+    @clear_ping_data = to_boolean(test_case_data["reset-ping-data"][0]["content"])
+    @nmap_address = test_case_data["nmap-address"][0]
+    create_test_case_file
+
+    puts "done."
+  rescue Exception => e
+    machine_data = if File.exist?("#{$pingbox_root}/config/test_case.yml")
+      YAML.load(File.open("#{$pingbox_root}/config/test_case.yml"))
+    else
       create_test_case_file
-
-      puts "Got test from server"
-    rescue
-      if File.exist?("#{$pingbox_root}/config/test_case.yml")
-        machine_data= YAML.load(File.open("#{$pingbox_root}/config/test_case.yml"))
-      else
-        FileUtils.touch("#{$pingbox_root}/config/test_case.yml")
-        machine_data= YAML.load(File.open("#{$pingbox_root}/config/test_case.yml"))
-      end
-
-      @ping_hosts = machine_data[:ping_hosts]
-      @ping_times = machine_data[:ping_times]
-      @test_case_id = machine_data[:test_case_id]
-      @nmap_address = machine_data[:nmap_address]
-
+      nil
     end
 
-
-  end
-  def read_test_case_file
+    @ping_hosts = machine_data[:ping_hosts]
+    @ping_times = machine_data[:ping_times]
+    @test_case_id = machine_data[:test_case_id]
+    @nmap_address = machine_data[:nmap_address]
 
   end
 
   def create_test_case_file
-    test_case = {:ping_hosts => @ping_hosts, :ping_times => @ping_times, :test_case_id=> @test_case_id, :nmap_address => @nmap_address}
+    test_case = {
+      :ping_hosts   => @ping_hosts,
+      :ping_times   => @ping_times,
+      :test_case_id => @test_case_id,
+      :nmap_address => @nmap_address
+    }
+
     File.open("#{$pingbox_root}/config/test_case.yml", "w+") {|f| f.write(test_case.to_yaml) }
-  end
-
-
-
-  def create_machine_file
-
-    machine_data = {:machine_id => Time.now.to_i }   
-    url = "#{@url}/machine"
-    @file_data = PingData.new.load_file.to_json
-    data = {:system_id => machine_data[:machine_id]}
-
-    postData = Net::HTTP.post_form(URI.parse(url), data)
-
-    # Once a 200 is received then remove records from file
-    ap postData
-    if postData.code == "200"
-      PingData.new.clear_file
-      File.open("#{$pingbox_root}/config/machine.yml", "w+") {|f| f.write(machine_data.to_yaml) }
-
-      #clear out all ping.yml and test_case.yml file
-      %w{ping.yml test_case.yml env.yml public_ip.yml}.each do |file|
-        FileUtils.rm("#{$pingbox_root}/config/#{file}")
-      end
-      exit
-    end
-
-  end
-
-  def create_env_file(env)
-    data = {:ping_box_env => env}
-    File.open("#{$pingbox_root}/config/env.yml", "w+") {|f| f.write(data.to_yaml) }
-  end
-
-  def get_env
-    if File.exist?("#{$pingbox_root}/config/env.yml")
-      @env= YAML.load(File.open("#{$pingbox_root}/config/env.yml"))
-      if @env[:ping_box_env] == "production"
-        @url = "http://ping.techrockstars.com" 
-      else
-        @url = "http://dev2.techrockstars.com:3000" 
-      end
-    else
-      @env = "production"
-      create_env_file("production") #production by default
-    end
-  end
-
-  def load_machine_data 
-    parsed = begin
-
-               if File.exist?("#{$pingbox_root}/config/machine.yml")
-                 @machine_data= YAML.load(File.open("#{$pingbox_root}/config/machine.yml"))
-               else
-                 create_machine_file
-                 @machine_data= YAML.load(File.open("#{$pingbox_root}/config/machine.yml"))
-               end
-             rescue ArgumentError => e  
-               puts "Could not open file #{e.message}"
-             end
-    @machine_data
   end
 
   def time_first_ping

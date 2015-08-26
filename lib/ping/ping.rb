@@ -131,6 +131,7 @@ class Ping
       return env[:ping_box_env].to_sym
     else
       puts "Enviroment file does not exist. Please create one."
+      return nil
     end
   end
 
