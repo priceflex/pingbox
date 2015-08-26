@@ -226,39 +226,6 @@ class TestCase
     e.backtrace.each { |m| puts "\tfrom #{m}" }
   end
 
-  def transmit_to_database
-    # Sends data to glitch.techrockstars.com/data
-    # packets => [{ :packets_transmitted => '1', :packets_recieved => '1', :packet_errors => '', :completion_time => '0', :min => "0.016", :average => "0.016", :max => "0.016", :host => "localhost", :time => "2013-02-24 01:18:26.000000000 -08:00"}]
-
-    data = {}
-    #url = "http://ping.techrockstars.com/data" 
-    #url = "http://glitch.techrockstars.com/data"
-    @file_data = PingData.new.load_file.to_json
-    data = {:packets => @file_data, :machine_id => @machine_data[:machine_id] }
-    begin
-      postData = Net::HTTP.post_form(URI.parse(@url), data)
-
-      #postData.read_timeout = 500
-
-      # Once a 200 is received then remove records from file
-      if postData.code == "200" || @clear_ping_data
-        PingData.new.clear_file
-        if @clear_ping_data
-          # Delete all the env file and the public_ip file
-          %w{env.yml public_ip.yml}.each do |file|
-            FileUtils.rm("#{$pingbox_root}/#{file}")
-          end	
-          # Delete all files in the data folder
-          #Clear Old Ping Data
-          system("find #{$pingbox_root}/data -maxdepth 1 -name '*.gz' -print0 | xargs -0 rm -f")
-        end
-        @clear_ping_data = false 
-      end
-    rescue
-    end
-
-  end
-
   def create_test_case_file
     test_case = {
       :ping_hosts   => @ping_hosts,
@@ -272,21 +239,25 @@ class TestCase
 
   def start_work
     puts "Starting ping process."
-    @ping_times = (50/ time_first_ping).round
-    @ping_data = PingData.new
 
-    puts "Ping Hosts: #{@ping_hosts.join(", ")}"
+    if @ping_hosts
+      @ping_times = (50/ time_first_ping).round
+      @ping_data = PingData.new
 
-    # this would be a good place to add threading
-    @ping_times.times do |i|
-      puts "#{@ping_times - i} requests remain..."
-      ping_all_hosts
+      puts "Ping Hosts: #{@ping_hosts.join(", ")}"
+
+      # this would be a good place to add threading
+      @ping_times.times do |i|
+        puts "#{@ping_times - i} requests remain..."
+        ping_all_hosts
+      end
+
+      cached_pings = CachedPing.new(@ping_data)
+      SaveToYmlFile.new("cached_pings.yml", cached_pings.calculate_pings)
+      @amazon_s3.upload_ping_files
+    else
+      puts "Nothing to ping. :("
     end
-
-    cached_pings = CachedPing.new(@ping_data)
-    SaveToYmlFile.new("cached_pings.yml", cached_pings.calculate_pings)
-    @amazon_s3.upload_ping_files
-    puts "Saved Files"
   end
 
   def ping_all_hosts
@@ -314,6 +285,35 @@ class TestCase
     return end_time - start_time
   end
 
+  def transmit_to_database
+    # this was the old method for transmitting our data to the database.
+    # everything now goes straight to S3.
+
+    @file_data = PingData.new.load_file.to_json
+    data = {:packets => @file_data, :machine_id => @machine_data[:machine_id] }
+    begin
+      postData = Net::HTTP.post_form(URI.parse(@url), data)
+
+      #postData.read_timeout = 500
+
+      # Once a 200 is received then remove records from file
+      if postData.code == "200" || @clear_ping_data
+        PingData.new.clear_file
+        if @clear_ping_data
+          # Delete all the env file and the public_ip file
+          %w{env.yml public_ip.yml}.each do |file|
+            FileUtils.rm("#{$pingbox_root}/#{file}")
+          end	
+          # Delete all files in the data folder
+          #Clear Old Ping Data
+          system("find #{$pingbox_root}/data -maxdepth 1 -name '*.gz' -print0 | xargs -0 rm -f")
+        end
+        @clear_ping_data = false 
+      end
+    rescue
+    end
+  end
+
   def to_boolean(str)
     str == 'true'
   end
@@ -322,8 +322,8 @@ end
 
 tc = TestCase.new
 tc.run
-tc.transmit_to_database
-
+#tc.transmit_to_database
+puts "test_case.rb process complete."
 
 __END__
 DO NOT REMOVE: required for the DATA object above to lock file.
