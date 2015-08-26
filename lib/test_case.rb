@@ -52,6 +52,7 @@ class TestCase
     @amazon_s3 = SendToS3.new
     @clear_ping_data = false
     get_env
+    @url = "http://192.168.0.124:3000" 
     load_machine_data
   end
 
@@ -75,15 +76,13 @@ class TestCase
   def load_machine_data 
     create_machine_file unless File.exist?("#{$pingbox_root}/config/machine.yml")
     @machine_data = YAML.load(File.open("#{$pingbox_root}/config/machine.yml"))
-  rescue
-    puts "Can't read machine.yml file."
-  ensure
-     return @machine_data
   end
 
   def create_machine_file
     # essentially creates a new machine in the database by resetting its "machine_id"
     # to the current time.to_i
+
+    puts "Machine.yml not found.  Making a new one and reassigning this machine's ID on the server."
 
     machine_data = { :machine_id => Time.now.to_i }   
     url = "#{@url}/machine"
@@ -116,22 +115,20 @@ class TestCase
   end
 
   def report_to_monitor
-    # if @nmap_address is present do a nmap test
-    if @nmap_address
-      @nmap_dump = `/usr/bin/nmap -sP #{@nmap_address}`
-    end
     @ifconfig_dump = `/sbin/ifconfig`
     @ps_aux_dump = `/bin/ps aux`
     @du_sh_dump = `/usr/bin/du -sh /home/pingbox/pingbox/data`
+    @nmap_dump = `/usr/bin/nmap -sP #{@nmap_address}` if @nmap_address
+
     begin
-      @private_ip = Socket.ip_address_list.detect{|intf| intf.ipv4_private?}.ip_address
-    rescue
-      puts "Error getting ip"
+      @private_ip = Socket.ip_address_list.detect{ |intf| intf.ipv4_private? }.ip_address 
+    rescue Exception => e
+      puts "Error getting private IP: #{e.message}"
+      e.backtrace.each { |m| puts "\tfrom #{m}" }
     end
 
     public_ip
     transmit_monitor
-
   end
 
   def transmit_monitor 
@@ -147,11 +144,13 @@ class TestCase
 
     puts "Transmitting monitor."
     postData = Net::HTTP.post_form(URI.parse("#{@url}/machine/#{@machine_data[:machine_id]}"), data)
+
     if postData.code == "200" 
       puts "Monitor transmitted OK."
     else
       puts "Monitor not transmitted.  Status code from server: #{postData.code}"
     end
+
   rescue Exception => e
     puts "Error transmitting monitor: #{e.message}"
     e.backtrace.each { |m| puts "\tfrom #{m}" }
@@ -225,30 +224,39 @@ class TestCase
     xml_data = Net::HTTP.get_response(URI.parse(url)).body
     test_case_data = XmlSimple.xml_in(xml_data) 
 
-    timeout_in_seconds = 3
+    if test_case_data['id']
+      timeout_in_seconds = 3
 
-binding.pry
-    @ping_hosts = test_case_data["ping-hosts-addresses"][0].split("\n")
-    @ping_times = (60 / timeout_in_seconds) / @ping_hosts.size
-    @test_case_id = test_case_data["id"][0]["content"].to_i
-    @clear_ping_data = to_boolean(test_case_data["reset-ping-data"][0]["content"])
-    @nmap_address = test_case_data["nmap-address"][0]
-    create_test_case_file
-
-    puts "done."
-  rescue Exception => e
-    machine_data = if File.exist?("#{$pingbox_root}/config/test_case.yml")
-      YAML.load(File.open("#{$pingbox_root}/config/test_case.yml"))
-    else
+      @ping_hosts = test_case_data["ping-hosts-addresses"][0].split("\n")
+      @ping_times = (60 / timeout_in_seconds) / @ping_hosts.size
+      @test_case_id = test_case_data["id"][0]["content"].to_i
+      @clear_ping_data = to_boolean(test_case_data["reset-ping-data"][0]["content"])
+      @nmap_address = test_case_data["nmap-address"][0]
       create_test_case_file
-      nil
+
+      puts "done."
+    else
+      print "\nThe server was unable to provide test case information.  "
+      puts "Please check to make sure there has been a test case created for this machine."
+      puts "Machine ID: #{@machine_data[:machine_id]}"
+
+      machine_data = if File.exist?("#{$pingbox_root}/config/test_case.yml")
+        YAML.load(File.open("#{$pingbox_root}/config/test_case.yml"))
+      else
+        create_test_case_file
+        nil
+      end
+
+      # i don't exactly know why this is here if we weren't able to get test case info
+      # from the server.  i think it runs the work on the last info provided?
+
+      if machine_data
+        @ping_hosts = machine_data[:ping_hosts]
+        @ping_times = machine_data[:ping_times]
+        @test_case_id = machine_data[:test_case_id]
+        @nmap_address = machine_data[:nmap_address]
+      end
     end
-
-    @ping_hosts = machine_data[:ping_hosts]
-    @ping_times = machine_data[:ping_times]
-    @test_case_id = machine_data[:test_case_id]
-    @nmap_address = machine_data[:nmap_address]
-
   end
 
   def create_test_case_file
