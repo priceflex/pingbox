@@ -144,6 +144,10 @@ class Ping
     end
   end
 
+  def self.server_url
+    self.env? == :production ? "http://ping.techrockstars.com" : "http://192.168.0.124:3000"
+  end
+
   def perform_ping
     @time = Time.now
     @pings << `ping #{@hostname} -c #{@count}` + "-----Time Started #{@time} \n" + "----- Host #{@hostname}" 

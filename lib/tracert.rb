@@ -16,6 +16,7 @@ class TraceRoute
   end
 
   def trace
+    aalsdkjf
     output = []
 
     @ips.each do |ip| 
@@ -55,9 +56,9 @@ begin
     puts "Begin traceroute."
 
     if machine_data[:ping_hosts]
-      t = TraceRoute.new(machine_data[:ping_hosts])
-      t.trace
-      t.send_results
+      @traceroute = TraceRoute.new(machine_data[:ping_hosts])
+      @traceroute.trace
+      @traceroute.send_results
     else
       puts "No hosts to trace.\n\n"
     end
@@ -66,6 +67,6 @@ rescue Exception => e
   puts "Unexpected error in traceroute process: #{e.message}"
   e.backtrace.each { |m| puts "\tfrom #{m}" }
 
-  # when we get the event logger controller set up, send the error to
-  # our proper controller action to process the error.
+  # send the error to the proper server for event logging.
+  Net::HTTP.post_form(URI.parse("#{Ping.server_url}/log_event"), [e]) 
 end
