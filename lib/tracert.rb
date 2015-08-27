@@ -51,9 +51,13 @@ end
 if File.exist?("#{$config_dir}/test_case.yml")
   machine_data = YAML.load(File.open("#{$config_dir}/test_case.yml"))
 
-  if machine_data
+  puts "Begin traceroute."
+
+  if machine_data[:ping_hosts]
     t = TraceRoute.new(machine_data[:ping_hosts])
     t.trace
     t.send_results
+  else
+    puts "No hosts to trace.\n\n"
   end
 end

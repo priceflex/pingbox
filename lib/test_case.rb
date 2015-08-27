@@ -323,7 +323,7 @@ end
 tc = TestCase.new
 tc.run
 #tc.transmit_to_database
-puts "test_case.rb process complete."
+puts "test_case.rb process complete.\n\n"
 
 __END__
 DO NOT REMOVE: required for the DATA object above to lock file.
