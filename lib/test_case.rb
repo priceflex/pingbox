@@ -329,10 +329,18 @@ class TestCase
 
 end
 
-tc = TestCase.new
-tc.run
-#tc.transmit_to_database
-puts "test_case.rb process complete.\n\n"
+begin
+  tc = TestCase.new
+  tc.run
+  #tc.transmit_to_database
+  puts "test_case.rb process complete.\n\n"
+rescue Exception => e
+  puts "Unexpected error in test case process: #{e.message}"
+  e.backtrace.each { |m| puts "\tfrom #{m}" }
+
+  # when we get the event logger controller set up, send the error to
+  # our proper controller action to process the error.
+end
 
 __END__
 DO NOT REMOVE: required for the DATA object above to lock file.

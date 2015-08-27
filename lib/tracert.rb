@@ -48,16 +48,24 @@ class TraceRoute
 
 end
 
-if File.exist?("#{$config_dir}/test_case.yml")
-  machine_data = YAML.load(File.open("#{$config_dir}/test_case.yml"))
+begin
+  if File.exist?("#{$config_dir}/test_case.yml")
+    machine_data = YAML.load(File.open("#{$config_dir}/test_case.yml"))
 
-  puts "Begin traceroute."
+    puts "Begin traceroute."
 
-  if machine_data[:ping_hosts]
-    t = TraceRoute.new(machine_data[:ping_hosts])
-    t.trace
-    t.send_results
-  else
-    puts "No hosts to trace.\n\n"
+    if machine_data[:ping_hosts]
+      t = TraceRoute.new(machine_data[:ping_hosts])
+      t.trace
+      t.send_results
+    else
+      puts "No hosts to trace.\n\n"
+    end
   end
+rescue Exception => e
+  puts "Unexpected error in traceroute process: #{e.message}"
+  e.backtrace.each { |m| puts "\tfrom #{m}" }
+
+  # when we get the event logger controller set up, send the error to
+  # our proper controller action to process the error.
 end

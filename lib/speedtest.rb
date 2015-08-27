@@ -68,6 +68,9 @@ begin
   s.download_test
   s.send_results
 rescue Exception => e
-  puts "Error in speed-test: #{e.message}"
+  puts "Unexpected error in speed test process: #{e.message}"
   e.backtrace.each { |m| puts "\tfrom #{m}" }
+
+  # when we get the event logger controller set up, send the error to
+  # our proper controller action to process the error.
 end
