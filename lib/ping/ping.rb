@@ -198,35 +198,31 @@ class PingData
 
 
   def load_file 
-    parsed = begin
-               if File.exist?("#{$pingbox_root}/ping.yml")
-                 @file_data = YAML.load(File.open("#{$pingbox_root}/ping.yml"))
-               else
-                 FileUtils.touch("#{$pingbox_root}/ping.yml")
-                 @file_data = YAML.load(File.open("#{$pingbox_root}/ping.yml"))
-               end
-             rescue ArgumentError => e  
-               puts "Could not open file #{e.message}"
-             end
-    @file_data
+    ping_file = "#{$pingbox_root}/config/ping.yml"
+    FileUtils.touch(ping_file) unless File.exist?(ping_file)
+    @file_data = YAML.load(File.open(ping_file))
+  rescue ArgumentError => e  
+    puts "Could not open ping file #{e.message}"
+  ensure
+    return @file_data
   end
 
   def clear_file
     data = nil
-    File.open("#{$pingbox_root}/ping.yml", "w+") {|f| f.write(data.to_yaml) }
+    File.open("#{$pingbox_root}/config/ping.yml", "w+") { |f| f.write(data.to_yaml) }
   end
 
   def save_staging_file
-    File.open("#{$pingbox_root}/ping.yml", "w+") {|f| f.write(@all_data.map(&:results).to_yaml) }
+    File.open("#{$pingbox_root}/config/ping.yml", "w+") { |f| f.write(@all_data.map(&:results).to_yaml) }
   end
 
   def sha_ping_file
-    @hash_file_name = Hasher.new("#{$pingbox_root}/ping.yml").hashsum
+    @hash_file_name = Hasher.new("#{$pingbox_root}/config/ping.yml").hashsum
   end
 
   def zip_ping_file
-    system("gzip -9 #{$pingbox_root}/ping.yml")
-    FileUtils.mv "#{$pingbox_root}/ping.yml.gz", "#{$pingbox_root}/data/#{@hash_file_name}.gz"
+    system("gzip -9 #{$pingbox_root}/config/ping.yml")
+    FileUtils.mv "#{$pingbox_root}/config/ping.yml.gz", "#{$pingbox_root}/data/#{@hash_file_name}.gz"
   end
 
   def save(data)

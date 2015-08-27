@@ -163,7 +163,7 @@ class TestCase
   end
 
   def report_to_monitor
-    puts "Gathering monitor data..."
+    puts "Gathering monitor data."
     @ifconfig_dump = `/sbin/ifconfig`
     @ps_aux_dump = `/bin/ps aux`
     @du_sh_dump = `/usr/bin/du -sh /home/pingbox/pingbox/data`
@@ -245,10 +245,14 @@ class TestCase
       @ping_data = PingData.new
 
       puts "Ping Hosts: #{@ping_hosts.join(", ")}"
+      puts "Pinging..."
 
       # this would be a good place to add threading
+      midway = @ping_times / 2
+      stabilizer = @ping_times % 2 == 0 ? 0 : 1
+
       @ping_times.times do |i|
-        puts "#{@ping_times - i} requests remain..."
+        dotty_output(i, midway, stabilizer)
         ping_all_hosts
       end
 
@@ -258,6 +262,11 @@ class TestCase
     else
       puts "Nothing to ping. :("
     end
+  end
+
+  def dotty_output(i, midway, stabilizer)
+    i <= midway ? i.times { print ' ' } : ((@ping_times - i) - stabilizer).times { print ' ' }
+    puts '.'
   end
 
   def ping_all_hosts
