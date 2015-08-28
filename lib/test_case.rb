@@ -46,7 +46,8 @@ require "#{$pingbox_root}/lib/pingbox/event_logger"
         # public_ip
         # transmit_monitor
      # start_work
-   # transmit_to_database
+        # ping_all_hosts
+        # send files to s3!
 
 class TestCase
 
@@ -68,7 +69,6 @@ class TestCase
     if @env == :production
       @url = "http://ping.techrockstars.com" 
     elsif @env == :development
-      #@url = "http://dev2.techrockstars.com:3000" 
       @url = "http://192.168.0.124:3000" 
     else 
       @env = :production
