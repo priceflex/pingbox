@@ -51,7 +51,10 @@ require "#{$pingbox_root}/lib/pingbox/event_logger"
 
 class TestCase
 
+  attr_accessor :env, :url, :machine_data
+
   def initialize
+    @start_time = Time.now
     @amazon_s3 = SendToS3.new
     @clear_ping_data = false
     get_env
@@ -157,7 +160,7 @@ class TestCase
         @ping_hosts = machine_data[:ping_hosts]
         @ping_times = machine_data[:ping_times]
         @test_case_id = machine_data[:test_case_id]
-        @nmap_address = machine_data[:nmap_address]
+        #@nmap_address = machine_data[:nmap_address]
       end
     end
   end
@@ -169,7 +172,7 @@ class TestCase
     @du_sh_dump = `/usr/bin/du -sh /home/pingbox/pingbox/data`
 
     # eventually this needs to be extracted to be called from its own file.
-    @nmap_dump = `/usr/bin/nmap -sP #{@nmap_address}` if @nmap_address 
+    #@nmap_dump = `/usr/bin/nmap -sP #{@nmap_address}` if @nmap_address 
 
     private_ip
     public_ip
@@ -241,7 +244,7 @@ class TestCase
     puts "Starting ping process."
 
     if @ping_hosts
-      @ping_times = (50/ time_first_ping).round
+      @ping_times = (50 / time_first_ping).round
       @ping_data = PingData.new
 
       puts "Ping Hosts: #{@ping_hosts.join(", ")}"
@@ -251,16 +254,21 @@ class TestCase
       midway = @ping_times / 2
       stabilizer = @ping_times % 2 == 0 ? 0 : 1
 
-      @ping_times.times do |i|
-        dotty_output(i, midway, stabilizer)
+      while (Time.now - @start_time).round(3) < 50
+        #dotty_output(i, midway, stabilizer)
+        print '. '
         ping_all_hosts
+       # puts "running time: #{(Time.now - @start_time).round(3)} seconds"
       end
+
+      #@ping_times.times do |i|
+      #end
 
       cached_pings = CachedPing.new(@ping_data)
       SaveToYmlFile.new("cached_pings.yml", cached_pings.calculate_pings)
-      @amazon_s3.upload_ping_files
+      #@amazon_s3.upload_ping_files
     else
-      puts "Nothing to ping. :("
+      puts "Nothing to ping. :'("
     end
   end
 
@@ -271,12 +279,17 @@ class TestCase
 
   def ping_all_hosts
     ping = Ping.new
+    threads = []
 
     @ping_hosts.each do |ip|
-      ping.count = 1
-      ping.hostname = ip
-      ping.perform_ping
+      threads << Thread.new(ping, ip) do |ping, ip|
+        ping.count = 1
+        ping.hostname = ip
+        ping.perform_ping
+      end
     end
+
+    threads.each(&:join)
 
     ping.pings.each do |ping|
       data = PingParser.new(ping, @test_case_id)
