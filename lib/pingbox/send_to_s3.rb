@@ -1,5 +1,6 @@
 $pingbox_root = "#{File.dirname(__FILE__)}/../.." unless $pingbox_root
 
+require 'pry'
 require 'aws-sdk'
 require "#{$pingbox_root}/lib/ping/ping"
 
@@ -24,20 +25,14 @@ class SendToS3
   end
 
   def upload_ping_files
-    puts "Uploading file(s) to S3... \n"
+    puts "Uploading contents of pingbox/data/ to S3..."
+    files = Dir.glob("#{$pingbox_root}/data/*.gz")
 
-    Dir.glob("#{$pingbox_root}/data/*.gz") do |file|
-      print "#{File.basename(file)[0...50]}... "
-
-      if send_file(@ping_bucket, File.basename(file), file)
-        puts "OK."
-        FileUtils.rm(file) 
-      end
-
+    files.each do |file|
+      FileUtils.rm(file) if send_file(@ping_bucket, File.basename(file), file)
     end
-  rescue Exception => e
-    puts "\nError transmitting data to S3: #{e.message}"
-    e.backtrace.each { |m| puts "\tfrom #{m}" }
+
+    puts "#{files.count} file(s) uploaded successfully."
   end
 
   def upload_speed_test

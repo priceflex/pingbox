@@ -35,20 +35,15 @@ class Nmap
   end
 
   def retrieve_test_case_info
-    print "Requesting test case information from server... "
-
     url = "#{@url}/machine/#{@machine_data[:machine_id]}/test_cases.xml"
     xml_data = Net::HTTP.get_response(URI.parse(url)).body
     test_case_data = XmlSimple.xml_in(xml_data) 
 
     @nmap_address = test_case_data['nmap-address'].first if test_case_data['id']
-    puts "done."
   end
 
   def gather_nmap_data
-    print "Generating nmap... "
     @nmap_dump = `/usr/bin/nmap -sP #{@nmap_address}` if @nmap_address 
-    puts "done."
   end
 
   def transmit_nmap_dump
@@ -70,9 +65,11 @@ end
 
 
 begin
+  puts "Begin network map."
   nmap = Nmap.new
    
   if nmap.nmap_address
+    puts "Got nmap address from server. Generating map..."
     nmap.gather_nmap_data
     nmap.transmit_nmap_dump
   else

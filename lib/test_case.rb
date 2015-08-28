@@ -52,7 +52,7 @@ require "#{$pingbox_root}/lib/pingbox/event_logger"
 class TestCase
 
   def initialize
-    @start_time = Time.now
+    puts "The current time is #{Time.now}"
     @amazon_s3 = SendToS3.new
     @clear_ping_data = false
     get_env
@@ -239,40 +239,22 @@ class TestCase
   end
 
   def start_work
-    puts "Starting ping process."
-
     if @ping_hosts
-      @ping_times = (50 / time_first_ping).round
+      #@ping_times = (50 / time_first_ping).round
       @ping_data = PingData.new
 
-      puts "Ping Hosts: #{@ping_hosts.join(", ")}"
+      puts "Hosts: #{@ping_hosts.join(", ")}"
       puts "Pinging..."
 
-      # this would be a good place to add threading
-      midway = @ping_times / 2
-      stabilizer = @ping_times % 2 == 0 ? 0 : 1
-
-      while (Time.now - @start_time).round(3) < 50
-        #dotty_output(i, midway, stabilizer)
-        print '. '
+      while Time.now.sec < 50
         ping_all_hosts
-       # puts "running time: #{(Time.now - @start_time).round(3)} seconds"
       end
-
-      #@ping_times.times do |i|
-      #end
 
       cached_pings = CachedPing.new(@ping_data)
       SaveToYmlFile.new("cached_pings.yml", cached_pings.calculate_pings)
-      #@amazon_s3.upload_ping_files
     else
       puts "Nothing to ping. :'("
     end
-  end
-
-  def dotty_output(i, midway, stabilizer)
-    i <= midway ? i.times { print ' ' } : ((@ping_times - i) - stabilizer).times { print ' ' }
-    puts '.'
   end
 
   def ping_all_hosts
@@ -280,14 +262,10 @@ class TestCase
     threads = []
 
     @ping_hosts.each do |ip|
-      threads << Thread.new(ping, ip) do |ping, ip|
-        ping.count = 1
-        ping.hostname = ip
-        ping.perform_ping
-      end
+      ping.count = 1
+      ping.hostname = ip
+      ping.perform_ping
     end
-
-    threads.each(&:join)
 
     ping.pings.each do |ping|
       data = PingParser.new(ping, @test_case_id)
@@ -344,7 +322,7 @@ begin
   tc = TestCase.new
   tc.run
   #tc.transmit_to_database
-  puts "test_case.rb process complete.\n\n"
+  puts "test_case.rb process complete.\n\n   -----\n\n"
 rescue Exception => e
   EventLogger.process_exception("Test case", e)
 end
