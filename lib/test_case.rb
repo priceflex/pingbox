@@ -51,8 +51,6 @@ require "#{$pingbox_root}/lib/pingbox/event_logger"
 
 class TestCase
 
-  attr_accessor :env, :url, :machine_data
-
   def initialize
     @start_time = Time.now
     @amazon_s3 = SendToS3.new

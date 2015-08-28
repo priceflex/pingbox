@@ -1,5 +1,7 @@
 $pingbox_root = "#{File.dirname(__FILE__)}/../.." unless $pingbox_root
 
+require 'net/http'
+require 'xmlsimple'
 require "#{$pingbox_root}/lib/ping/ping"
 
 class EventLogger
