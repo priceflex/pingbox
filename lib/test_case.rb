@@ -112,7 +112,7 @@ class TestCase
       end
 
       # why does it need to exit the process after creating this file? -EW
-      exit
+      #exit
     end
   end
 
