@@ -29,6 +29,7 @@ class TraceRoute
   def send_results
     puts "Sending traceroute results..."
 
+    adslfkajdsf
     if File.exist?("#{$config_dir}/machine.yml") && File.exist?("#{$config_dir}/test_case.yml")
       machine = YAML.load(File.open("#{$config_dir}/machine.yml"))
       url = Ping.env? == :production ? "ping.techrockstars.com" : "192.168.0.124:3000"
@@ -38,12 +39,8 @@ class TraceRoute
       Net::HTTP.post_form(URI.parse(machine_url), data) 
       puts "Successfully sent traceroute data to #{machine_url}"
     else 
-      return puts "Machine/Test Case configuration files not found. Aborting traceroute."
+      return puts "Machine/Test Case configuration files not found for traceroute. Abort."
     end
-
-  rescue Exception => e
-    puts "Error sending traceroute results: #{e.message}"
-    e.backtrace.each { |m| puts "\tfrom #{m}" }
   end
 
 end
@@ -63,14 +60,18 @@ begin
     end
   end
 rescue Exception => e
-  puts "Unexpected error in traceroute process: #{e.message}"
-  e.backtrace.each { |m| puts "\tfrom #{m}" }
+  puts "Unexpected error in traceroute process:\n#{e.message}"
+  backtrace = []
+  e.backtrace.each do |m| 
+    puts "\tfrom #{m}"
+    backtrace <<  m.gsub(/</, '{').gsub(/>/, '}')
+  end
 
   # need to grep for < and > characters - they mess up the output on analytics page.
   event_data = {
     event:            "Traceroute",
-    event_message:    e.message,
-    event_backtrace:  "<br />#{e.backtrace.join('<br />')}"
+    event_message:    e.message.gsub(/</, '{').gsub(/>/, '}'),
+    event_backtrace:  "<br />#{backtrace.join('<br />')}"
   }
 
   # send the error to the proper server for event logging.
