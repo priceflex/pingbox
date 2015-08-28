@@ -30,38 +30,8 @@ class Nmap
   end
 
   def load_machine_data 
-    create_machine_file unless File.exist?("#{$pingbox_root}/config/machine.yml")
+    #create_machine_file unless File.exist?("#{$pingbox_root}/config/machine.yml")
     @machine_data = YAML.load(File.open("#{$pingbox_root}/config/machine.yml"))
-  end
-
-  def create_machine_file
-    # essentially creates a new machine in the database by resetting its "machine_id"
-    # to the current time.to_i
-
-    puts "Machine.yml not found.  Making a new one and reassigning this machine's ID on the server."
-
-    machine_data = { :machine_id => Time.now.to_i }   
-    url = "#{@url}/machine"
-    #@file_data = PingData.new.load_file.to_json
-
-    postData = Net::HTTP.post_form(URI.parse(url), { system_id: machine_data[:machine_id] })
-
-    ap postData
-
-    # Once a 200 is received then remove records from file
-    if postData.code == "200"
-      PingData.new.clear_file
-      File.open("#{$pingbox_root}/config/machine.yml", "w+") {|f| f.write(machine_data.to_yaml) }
-
-      # clear out all ping.yml and test_case.yml file
-        # do these get recreated on the next go-around? -EW
-      %w{ping.yml test_case.yml env.yml public_ip.yml}.each do |file|
-        puts "Removed #{file}" if FileUtils.rm("#{$pingbox_root}/config/#{file}") rescue puts "Can't remove #{file}. Can't find it."
-      end
-
-      # why does it need to exit the process after creating this file? -EW
-      exit
-    end
   end
 
   def retrieve_test_case_info
