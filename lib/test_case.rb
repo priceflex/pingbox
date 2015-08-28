@@ -17,6 +17,7 @@ require "#{$pingbox_root}/lib/ping/ping"
 require "#{$pingbox_root}/lib/pingbox/cached_ping"
 require "#{$pingbox_root}/lib/pingbox/save_to_yaml_file"
 require "#{$pingbox_root}/lib/pingbox/send_to_s3"
+require "#{$pingbox_root}/lib/pingbox/event_logger"
 
 # order of events and instance variables within: 
    # initialize
@@ -53,7 +54,6 @@ class TestCase
     @amazon_s3 = SendToS3.new
     @clear_ping_data = false
     get_env
-    @url = "http://192.168.0.124:3000" 
     load_machine_data
   end
 
@@ -335,11 +335,7 @@ begin
   #tc.transmit_to_database
   puts "test_case.rb process complete.\n\n"
 rescue Exception => e
-  puts "Unexpected error in test case process: #{e.message}"
-  e.backtrace.each { |m| puts "\tfrom #{m}" }
-
-  # when we get the event logger controller set up, send the error to
-  # our proper controller action to process the error.
+  EventLogger.process_exception("Test case", e)
 end
 
 __END__
