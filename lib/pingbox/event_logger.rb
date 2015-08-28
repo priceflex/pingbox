@@ -1,4 +1,4 @@
-$pingbox_root = "#{File.dirname(__FILE__)}/.." unless $pingbox_root
+$pingbox_root = "#{File.dirname(__FILE__)}/../.." unless $pingbox_root
 
 require "#{$pingbox_root}/lib/ping/ping"
 
