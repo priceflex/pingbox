@@ -16,7 +16,6 @@ class TraceRoute
   end
 
   def trace
-    aalsdkjf
     output = []
 
     @ips.each do |ip| 
@@ -67,6 +66,19 @@ rescue Exception => e
   puts "Unexpected error in traceroute process: #{e.message}"
   e.backtrace.each { |m| puts "\tfrom #{m}" }
 
+  # need to grep for < and > characters - they mess up the output on analytics page.
+  event_data = {
+    event:            "Traceroute",
+    event_message:    e.message,
+    event_backtrace:  "<br />#{e.backtrace.join('<br />')}"
+  }
+
   # send the error to the proper server for event logging.
-  Net::HTTP.post_form(URI.parse("#{Ping.server_url}/log_event"), [e]) 
+  post_data = Net::HTTP.post_form(URI.parse("#{Ping.server_url}/log_event"), event_data)
+
+  if post_data.code == "200" 
+    puts "\nSuccessfully sent traceroute error to #{Ping.server_url}/log_event\n\n"
+  else
+    puts "\nTraceroute error message did not successfully send. Server gave a response of #{post_data.code}.\n\n"
+  end
 end
