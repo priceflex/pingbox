@@ -82,7 +82,12 @@ class Nmap
   end
 
   def transmit_nmap_dump
-    postData = Net::HTTP.post_form(URI.parse("#{@url}/machine/#{@machine_data[:machine_id]}"), { nmap_dump: @nmap_dump })
+    data = {
+      _method: :put,
+      nmap_dump: @nmap_dump
+    }
+
+    postData = Net::HTTP.post_form(URI.parse("#{@url}/machine/#{@machine_data[:machine_id]}"), data)
 
     if postData.code == "200" 
       puts "Nmap transmitted OK."
