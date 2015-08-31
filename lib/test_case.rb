@@ -213,13 +213,13 @@ class TestCase
       :nmap_dump      => @nmap_dump 
     }
 
-    puts "Transmitting monitor."
+    print "Transmitting monitor... "
     postData = Net::HTTP.post_form(URI.parse("#{@url}/machine/#{@machine_data[:machine_id]}"), data)
 
     if postData.code == "200" 
-      puts "Monitor transmitted OK."
+      puts "200 OK."
     else
-      puts "Monitor not transmitted.  Status code from server: #{postData.code}"
+      puts "failed. Status code from server: #{postData.code}"
     end
 
   rescue Exception => e

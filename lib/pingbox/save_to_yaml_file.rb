@@ -25,5 +25,6 @@ class SaveToYmlFile
   def zip_file
     system("gzip -9 #{$pingbox_root}/#{@filename}")
     FileUtils.mv "#{$pingbox_root}/#{@filename}.gz", "#{$pingbox_root}/data/#{@hash_file_name}.gz"
+    puts "File saved."
   end
 end

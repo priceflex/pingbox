@@ -69,7 +69,7 @@ begin
   nmap = Nmap.new
    
   if nmap.nmap_address
-    puts "Got nmap address from server. Generating map..."
+    puts "Got nmap address from server. Generating..."
     nmap.gather_nmap_data
     nmap.transmit_nmap_dump
   else

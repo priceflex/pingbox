@@ -17,7 +17,7 @@ class Hasher
 
 	def hashsum
 		open(@fullfilename, "r") do |io|
-			puts "Reading "+@fullfilename
+			puts "Hashing #{@fullfilename}"
 			while (!io.eof)
 				readBuf = io.readpartial($BUFLEN)
 				@hashfunc.update(readBuf)
