@@ -39,6 +39,6 @@ every 30.minutes do
   command "ruby #{$current_path}/lib/speedtest.rb"
 end
 
-#every 15.minutes do
-  #command "#{$current_path}/bin/bootstrap"
-#end
+every 15.minutes do
+  command "#{$current_path}/bootstrap"
+end
