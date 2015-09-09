@@ -32,7 +32,11 @@ class SendToS3
       FileUtils.rm(file) if send_file(@ping_bucket, File.basename(file), file)
     end
 
-    puts "#{files.count} file(s) uploaded successfully."
+    if files.count > 0
+      puts "#{files.count} file(s) uploaded successfully."
+    else
+      puts "No files to upload."
+    end
   end
 
   def upload_speed_test

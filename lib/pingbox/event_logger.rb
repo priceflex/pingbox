@@ -10,9 +10,11 @@ class EventLogger
     puts "Unexpected error in #{process.downcase} process:\n#{exception.message}"
 
     backtrace = []
-    exception.backtrace.each do |m| 
-      puts "\tfrom #{m}"
-      backtrace <<  m.gsub(/</, '{').gsub(/>/, '}')
+    unless exception.message.include? "Connection refused"
+      exception.backtrace.each do |m| 
+        puts "\tfrom #{m}"
+        backtrace <<  m.gsub(/</, '{').gsub(/>/, '}')
+      end
     end
 
     event_data = {
@@ -31,6 +33,9 @@ class EventLogger
     else
       puts "\n#{process.capitalize} error message did not successfully send. Server gave a response of #{post_data.code}.\n\n"
     end
+
+  rescue
+    puts "Cannot send error - server is unreachable."
   end
 
 end

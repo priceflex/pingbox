@@ -122,27 +122,31 @@ class TestCase
     # "ips" => ["4.2.2.1", "192.168.1.1", "google.com"],
     # "times_per_minute" => "6", # 20max per ip. In this case 6 because of a 3 second wait for non responsiveness
 
-    print "Requesting test case information from server... "
 
-    url = "#{@url}/machine/#{@machine_data[:machine_id]}/test_cases.xml"
-    xml_data = Net::HTTP.get_response(URI.parse(url)).body
-    test_case_data = XmlSimple.xml_in(xml_data) 
+    begin
+      print "Requesting test case information from server... "
+      url = "#{@url}/machine/#{@machine_data[:machine_id]}/test_cases.xml"
+      xml_data = Net::HTTP.get_response(URI.parse(url)).body
+      test_case_data = XmlSimple.xml_in(xml_data) 
 
-    if test_case_data['id']
-      timeout_in_seconds = 3
+      if test_case_data['id']
+        timeout_in_seconds = 3
 
-      @ping_hosts = test_case_data["ping-hosts-addresses"][0].split("\n")
-      @ping_times = (60 / timeout_in_seconds) / @ping_hosts.size
-      @test_case_id = test_case_data["id"][0]["content"].to_i
-      @clear_ping_data = to_boolean(test_case_data["reset-ping-data"][0]["content"])
-      @nmap_address = test_case_data["nmap-address"][0]
-      create_test_case_file
+        @ping_hosts = test_case_data["ping-hosts-addresses"][0].split("\n")
+        @ping_times = (60 / timeout_in_seconds) / @ping_hosts.size
+        @test_case_id = test_case_data["id"][0]["content"].to_i
+        @clear_ping_data = to_boolean(test_case_data["reset-ping-data"][0]["content"])
+        @nmap_address = test_case_data["nmap-address"][0]
+        create_test_case_file
 
-      puts "done."
-    else
-      print "\nThe server was unable to provide test case information.  "
-      puts "Please check to make sure there has been a test case created for this machine."
-      puts "Machine ID: #{@machine_data[:machine_id]}"
+        puts "done."
+      else
+        print "\nThe server was unable to provide test case information.  "
+        puts "Please check to make sure there has been a test case created for this machine."
+        puts "Machine ID: #{@machine_data[:machine_id]}"
+      end
+    rescue
+      puts "\nNo reply from server, using test_case.yml"
 
       machine_data = if File.exist?("#{$pingbox_root}/config/test_case.yml")
         YAML.load(File.open("#{$pingbox_root}/config/test_case.yml"))
@@ -150,9 +154,6 @@ class TestCase
         create_test_case_file
         nil
       end
-
-      # i don't exactly know why this is here if we weren't able to get test case info
-      # from the server.  i think it runs the work on the last info provided?
 
       if machine_data
         @ping_hosts = machine_data[:ping_hosts]
@@ -223,8 +224,7 @@ class TestCase
     end
 
   rescue Exception => e
-    puts "Error transmitting monitor: #{e.message}"
-    e.backtrace.each { |m| puts "\tfrom #{m}" }
+    puts "\nError transmitting monitor: #{e.message}"
   end
 
   def create_test_case_file
@@ -240,7 +240,6 @@ class TestCase
 
   def start_work
     if @ping_hosts
-      #@ping_times = (50 / time_first_ping).round
       @ping_data = PingData.new
 
       puts "Hosts: #{@ping_hosts.join(", ")}"

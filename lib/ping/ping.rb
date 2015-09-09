@@ -1,6 +1,7 @@
 $pingbox_root = "#{File.dirname(__FILE__)}/../.." unless $pingbox_root
 
 require 'time'
+require 'pry'
 
 class PingParser
   def initialize(ping_data, test_caseid=0)
@@ -40,7 +41,8 @@ class PingParser
   end
 
   def rounded_time
-    Time.at(((time.to_i / 60.0).round * 60.0).to_i)
+    #Time.at(((time.to_i / 60.0).round * 60.0).to_i)
+    Time.at(((time.to_i / 60.0).floor * 60.0).to_i)
   end
 
   def time
