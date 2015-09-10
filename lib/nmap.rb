@@ -40,6 +40,11 @@ class Nmap
     test_case_data = XmlSimple.xml_in(xml_data) 
 
     @nmap_address = test_case_data['nmap-address'].first if test_case_data['id']
+    puts "Got nmap address from server."
+  rescue
+    test_case_data = YAML.load(File.open("#{$pingbox_root}/config/test_case.yml"))
+    @nmap_address = test_case_data[:nmap_address]
+    puts "Couldn't resolve nmap address from server.  Using test_case.yml" if @nmap_address
   end
 
   def gather_nmap_data
@@ -65,11 +70,14 @@ end
 
 
 begin
+  # TODO: nmaps need to eventually go through S3 so we still receive this data after
+  # the server comes back online. it currently handles server errors properly, but there's no point.
+  # the data goes to waste if the server can't receive it.
+
   puts "Begin network map."
   nmap = Nmap.new
    
   if nmap.nmap_address
-    puts "Got nmap address from server. Generating..."
     nmap.gather_nmap_data
     nmap.transmit_nmap_dump
   else

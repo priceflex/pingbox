@@ -6,6 +6,7 @@ require 'pry'
 require 'net/http'
 require "#{$pingbox_root}/lib/ping/ping"
 require "#{$pingbox_root}/lib/pingbox/send_to_s3"
+require "#{$pingbox_root}/lib/pingbox/event_logger"
 
 class SpeedTest
 
@@ -62,6 +63,10 @@ class SpeedTest
 end
 
 begin
+  # TODO: this needs to eventually go through S3 so we still receive this data after
+  # the server comes back online. it currently handles server errors properly, but there's no point.
+  # the data goes to waste if the server can't receive it.
+
   puts "Initializing speed test."
   s = SpeedTest.new
   s.upload_test

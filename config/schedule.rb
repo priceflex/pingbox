@@ -26,6 +26,7 @@ env :AWS_REGION, 'us-east-1'
 set :output, "#{$current_path}/log/cron_log.log"
 
 every 1.minute do
+  command "ruby #{$current_path}/lib/migrator.rb"
   command "ruby #{$current_path}/lib/upload_pings.rb"
   command "ruby #{$current_path}/lib/nmap.rb"
   command "ruby #{$current_path}/lib/test_case.rb"
