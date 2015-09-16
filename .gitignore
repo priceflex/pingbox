@@ -15,7 +15,7 @@
 /tmp
 
 # Ignore any data files.
-data/*.gz
+/data/*.gz
 
 machine.yml
 ping.yml
