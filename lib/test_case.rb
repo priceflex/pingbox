@@ -299,7 +299,7 @@ class TestCase
         if @clear_ping_data
           # Delete all the env file and the public_ip file
           %w{env.yml public_ip.yml}.each do |file|
-            FileUtils.rm("#{$pingbox_root}/#{file}")
+            FileUtils.rm("#{$pingbox_root}/config/#{file}")
           end	
           # Delete all files in the data folder
           #Clear Old Ping Data
