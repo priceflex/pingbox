@@ -165,17 +165,24 @@ class TestCase
   end
 
   def report_to_monitor
-    puts "Gathering monitor data."
+    # perhaps the monitor should be in it's own file too?
+    puts "Gathering monitor data"
     @ifconfig_dump = `/sbin/ifconfig`
     @ps_aux_dump = `/bin/ps aux`
     @du_sh_dump = `/usr/bin/du -sh /home/pingbox/pingbox/data`
-
-    # eventually this needs to be extracted to be called from its own file.
-    #@nmap_dump = `/usr/bin/nmap -sP #{@nmap_address}` if @nmap_address 
+    @commit_history = `git -c /home/pingbox/pingbox rev-list HEAD`
 
     private_ip
     public_ip
+    detect_version
     transmit_monitor
+  rescue Exception => e
+    EventLogger.process_exception("Monitor data fetching", e)
+  end
+
+  def detect_version
+    commits = @commit_history.split("\n")
+    @version = commits.first
   end
 
   def private_ip
@@ -211,7 +218,8 @@ class TestCase
       :du_sh_dump     => @du_sh_dump,
       :private_ip     => @private_ip,
       :public_ip      => @public_ip,
-      :nmap_dump      => @nmap_dump 
+      :nmap_dump      => @nmap_dump,
+      :version        => @version
     }
 
     print "Transmitting monitor... "

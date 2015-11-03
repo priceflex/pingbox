@@ -46,8 +46,10 @@ class CachedPing
   private
 
   def ping_day
-    time = @ping_data.total_pings.first.time
-    time ? time : Time.now
+    # time = @ping_data.total_pings.first.time
+    # time ? time : Time.now
+
+    @ping_data.total_pings.first ? @ping_data.total_pings.first.time : Time.now
   end
 
   def test_case_id
