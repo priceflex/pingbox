@@ -27,13 +27,26 @@ class SendToS3
   def upload_ping_files
     puts "Uploading contents of pingbox/data/ to S3..."
     files = Dir.glob("#{$pingbox_root}/data/*.gz")
+    success_count = 0
+    failed_count = 0
 
     files.each do |file|
-      FileUtils.rm(file) if send_file(@ping_bucket, File.basename(file), file)
+      # FileUtils.rm(file) if send_file(@ping_bucket, File.basename(file), file)
+      uploaded_file = send_file(@ping_bucket, File.basename(file), file)
+
+      if uploaded_file
+        if verify_upload(uploaded_file)
+          success_count += 1
+          FileUtils.rm(file) 
+        else
+          file.delete # data was corrupt, delete from S3
+          failed_count += 1
+        end
+      end
     end
 
     if files.count > 0
-      puts "#{files.count} file(s) uploaded successfully."
+      puts "#{success_count} file(s) uploaded successfully. #{failed_count} failed."
     else
       puts "No files to upload."
     end
@@ -49,5 +62,24 @@ class SendToS3
     bucket_obj.upload_file(file)
     return bucket_obj
   end
+
+  def verify_upload(file)
+    # this seems kind of redundant but we're going to do it anyway.
+    # download the file we just uploaded, unzip and run its data through the hasher
+    # and compare it to its filename to ensure data integrity.
+
+    tmp = File.open("#{$pingbox_root}/tmp.gz", "wb+") do |temp_file|
+      temp_file.write(file.get[:body].read)
+    end
+
+    system "gzip -fd '#{$pingbox_root}/tmp.gz'"
+    data = File.open("#{$pingbox_root}/tmp", 'r').read
+
+    original_hash = file.key.split('.').first
+    new_hash = Digest::SHA2.new(512).update(data).hexdigest
+
+    return original_hash == new_hash ?  true : false
+  end
+
 end
 
