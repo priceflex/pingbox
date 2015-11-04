@@ -68,16 +68,17 @@ class SendToS3
     # download the file we just uploaded, unzip and run its data through the hasher
     # and compare it to its filename to ensure data integrity.
 
-    tmp = File.open("#{$pingbox_root}/tmp.gz", "wb+") do |temp_file|
+    tmp = File.open("#{$pingbox_root}/tmp/tmp.gz", "wb+") do |temp_file|
       temp_file.write(file.get[:body].read)
     end
 
-    system "gzip -fd '#{$pingbox_root}/tmp.gz'"
-    data = File.open("#{$pingbox_root}/tmp", 'r').read
+    system "gzip -fd '#{$pingbox_root}/tmp/tmp.gz'"
+    data = File.open("#{$pingbox_root}/tmp/tmp", 'r').read
 
     original_hash = file.key.split('.').first
     new_hash = Digest::SHA2.new(512).update(data).hexdigest
 
+    FileUtils.rm("#{$pingbox_root}/tmp/tmp")
     return original_hash == new_hash ?  true : false
   end
 
