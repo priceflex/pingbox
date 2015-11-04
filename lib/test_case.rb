@@ -170,7 +170,7 @@ class TestCase
     @ifconfig_dump = `/sbin/ifconfig`
     @ps_aux_dump = `/bin/ps aux`
     @du_sh_dump = `/usr/bin/du -sh /home/pingbox/pingbox/data`
-    @commit_history = `git -c /home/pingbox/pingbox rev-list HEAD`
+    @commit_history = `cd /home/pingbox/pingbox && git -c /home/pingbox/pingbox rev-list HEAD`
 
     private_ip
     public_ip
