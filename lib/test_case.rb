@@ -13,6 +13,7 @@ require 'uri'
 require 'json'
 require 'xmlsimple'
 require 'socket'
+require 'digest'
 require "#{$pingbox_root}/lib/ping/ping"
 require "#{$pingbox_root}/lib/pingbox/cached_ping"
 require "#{$pingbox_root}/lib/pingbox/save_to_yaml_file"
@@ -258,7 +259,8 @@ class TestCase
       end
 
       cached_pings = CachedPing.new(@ping_data)
-      SaveToYmlFile.new("cached_pings.yml", cached_pings.calculate_pings)
+      # SaveToYmlFile.new("cached_pings.yml", cached_pings.calculate_pings)
+      SaveToJson.new("cached_pings.yml", cached_pings.calculate_pings)
     else
       puts "Nothing to ping. :'("
     end
