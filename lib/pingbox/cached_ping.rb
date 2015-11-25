@@ -1,5 +1,7 @@
 class CachedPing
 
+  require 'active_support/time'
+
   # CachedPing 
   #   - test_case_id
   #     - timestamp => ping_day
@@ -38,7 +40,7 @@ class CachedPing
 
     return @calcuated_pings = {
       :test_case_id => test_case_id,
-      :ping_day     => ping_day,
+      :ping_day     => ping_day.to_i,
       :host_stats   => all_sorted_stats
     }
   end

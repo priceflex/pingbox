@@ -13,10 +13,10 @@ require 'uri'
 require 'json'
 require 'xmlsimple'
 require 'socket'
-require 'digest'
 require "#{$pingbox_root}/lib/ping/ping"
 require "#{$pingbox_root}/lib/pingbox/cached_ping"
 require "#{$pingbox_root}/lib/pingbox/save_to_yaml_file"
+require "#{$pingbox_root}/lib/pingbox/save_to_json"
 require "#{$pingbox_root}/lib/pingbox/send_to_s3"
 require "#{$pingbox_root}/lib/pingbox/event_logger"
 
@@ -76,6 +76,7 @@ class TestCase
       @env = :production
       create_env_file(@env.to_s) # production by default
     end
+    puts "Using #{@env.to_s} environment."
   end
 
   def create_env_file(env)
@@ -260,7 +261,7 @@ class TestCase
 
       cached_pings = CachedPing.new(@ping_data)
       # SaveToYmlFile.new("cached_pings.yml", cached_pings.calculate_pings)
-      SaveToJson.new("cached_pings.yml", cached_pings.calculate_pings)
+      SaveToJson.new("pings.json", cached_pings.calculate_pings)
     else
       puts "Nothing to ping. :'("
     end
