@@ -16,6 +16,9 @@
 # Ignore any data files.
 /data/*.gz
 
+# Ignore temp files
+/tmp/*
+
 machine.yml
 ping.yml
 test_case.yml
