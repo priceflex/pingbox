@@ -134,6 +134,8 @@ class TestCase
       if test_case_data['id']
         timeout_in_seconds = 3
 
+        @name = test_case_data['name'][0]
+        @trsla_url = test_case_data['trsla-url'][0]
         @ping_hosts = test_case_data["ping-hosts-addresses"][0].split("\n")
         @ping_times = (60 / timeout_in_seconds) / @ping_hosts.size
         @test_case_id = test_case_data["id"][0]["content"].to_i
@@ -239,6 +241,8 @@ class TestCase
 
   def create_test_case_file
     test_case = {
+      :name         => @name,
+      :trsla_url    => @trsla_url,
       :ping_hosts   => @ping_hosts,
       :ping_times   => @ping_times,
       :test_case_id => @test_case_id,

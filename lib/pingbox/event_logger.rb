@@ -3,6 +3,7 @@ $pingbox_root = "#{File.dirname(__FILE__)}/../.." unless $pingbox_root
 require 'net/http'
 require 'xmlsimple'
 require "#{$pingbox_root}/lib/ping/ping"
+require "#{$pingbox_root}/lib/machine"
 
 class EventLogger
 
@@ -18,6 +19,7 @@ class EventLogger
     end
 
     event_data = {
+      machine_info:     Machine.html_info,
       event:            process,
       event_message:    exception.message.gsub(/</, '{').gsub(/>/, '}'),
       event_backtrace:  "<br />#{backtrace.join('<br />')}"
@@ -34,8 +36,8 @@ class EventLogger
       puts "\n#{process.capitalize} error message did not successfully send. Server gave a response of #{post_data.code}.\n\n"
     end
 
-  rescue
-    puts "Cannot send error - server is unreachable."
+  rescue => e
+    puts "Cannot send error - #{e.message}"
   end
 
 end
