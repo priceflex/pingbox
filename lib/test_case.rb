@@ -53,7 +53,6 @@ require "#{$pingbox_root}/lib/pingbox/event_logger"
 class TestCase
 
   def initialize
-    puts "The current time is #{Time.now}"
     @amazon_s3 = SendToS3.new
     @clear_ping_data = false
     get_env
@@ -255,11 +254,12 @@ class TestCase
   def start_work
     if @ping_hosts
       @ping_data = PingData.new
+      minute = Time.now.min
 
       puts "Hosts: #{@ping_hosts.join(", ")}"
       puts "Pinging..."
 
-      while Time.now.sec < 50
+      while Time.now.min == minute && Time.now.sec < 50
         ping_all_hosts
       end
 
@@ -333,9 +333,10 @@ class TestCase
 end
 
 begin
+  puts "The current time is #{Time.now}"
   tc = TestCase.new
   tc.run
-  #tc.transmit_to_database
+  puts "Process finished at #{Time.now}"
   puts "test_case.rb process complete.\n\n   -----\n\n"
 rescue Exception => e
   EventLogger.process_exception("Test case", e)
