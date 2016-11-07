@@ -39,7 +39,7 @@ class SendToS3
           success_count += 1
           FileUtils.rm(file) 
         else
-          file.delete # data was corrupt, delete from S3
+          uploaded_file.delete # data was corrupt, delete from S3
           failed_count += 1
         end
       end
@@ -47,6 +47,11 @@ class SendToS3
 
     if files.count > 0
       puts "#{success_count} file(s) uploaded successfully to #{@ping_bucket}. #{failed_count} failed."
+      if failed_count > 0
+        e = Exception.new("#{failed_count} files failed to upload to S3.")
+        e.set_backtrace([])
+        EventLogger.process_exception("S3 upload", e)
+      end
     else
       puts "No files to upload."
     end
