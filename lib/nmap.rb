@@ -18,7 +18,7 @@ class Nmap
     if @env == :production
       @url = "http://ping.techrockstars.com" 
     elsif @env == :development
-      @url = "http://192.168.0.124:3000" 
+      @url = "http://techrockstars.com:3000" 
     else 
       @env = :production
       create_env_file(@env.to_s) # production by default
