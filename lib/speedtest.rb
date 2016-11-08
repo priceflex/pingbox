@@ -74,4 +74,5 @@ begin
   s.send_results
 rescue Exception => e
   EventLogger.process_exception("Speed test", e)
+  exit 1
 end

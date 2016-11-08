@@ -340,6 +340,7 @@ begin
   puts "test_case.rb process complete.\n\n   -----\n\n"
 rescue Exception => e
   EventLogger.process_exception("Test case", e)
+  exit 1
 end
 
 __END__

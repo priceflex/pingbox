@@ -1,0 +1,22 @@
+#!/bin/bash
+
+function process_fail {
+  echo "There was an error in the ${1} process.  Please double check this file runs without error."
+  exit 1
+}
+
+ruby /home/pingbox/pingbox/lib/test_case.rb
+if [ "$?" -eq 1 ]; then process_fail test_case.rb; fi
+
+ruby /home/pingbox/pingbox/lib/upload_pings.rb
+if [ "$?" -eq 1 ]; then process_fail upload_pings.rb; fi
+
+ruby /home/pingbox/pingbox/lib/speedtest.rb
+if [ "$?" -eq 1 ]; then process_fail speedtest.rb; fi
+
+ruby /home/pingbox/pingbox/lib/nmap.rb
+if [ "$?" -eq 1 ]; then process_fail nmap.rb; fi
+
+ruby /home/pingbox/pingbox/lib/tracert.rb
+if [ "$?" -eq 1 ]; then process_fail tracert.rb; fi
+

@@ -61,4 +61,5 @@ begin
   end
 rescue Exception => e
   EventLogger.process_exception("Traceroute", e)
+  exit 1
 end

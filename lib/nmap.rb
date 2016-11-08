@@ -86,4 +86,5 @@ begin
 
 rescue Exception => e
   EventLogger.process_exception("Nmap", e)
+  exit 1
 end
