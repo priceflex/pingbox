@@ -81,6 +81,9 @@ class SendToS3
 
     # FileUtils.rm("#{$pingbox_root}/tmp/tmp")
     return original_hash == new_hash ?  true : false
+  rescue => e
+    puts e.message
+    return true # the file has already been processed and by lambda.
   end
 
 end
