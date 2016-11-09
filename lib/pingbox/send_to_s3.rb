@@ -37,7 +37,7 @@ class SendToS3
       if uploaded_file
         if verify_upload(uploaded_file)
           success_count += 1
-          FileUtils.rm(file) 
+          FileUtils.rm_rf(file) 
         else
           uploaded_file.delete # data was corrupt, delete from S3
           failed_count += 1
