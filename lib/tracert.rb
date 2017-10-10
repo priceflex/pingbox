@@ -32,7 +32,7 @@ class TraceRoute
 
     if File.exist?("#{$config_dir}/machine.yml") && File.exist?("#{$config_dir}/test_case.yml")
       machine = YAML.load(File.open("#{$config_dir}/machine.yml"))
-      url = Ping.env? == :production ? "ping.techrockstars.com" : "192.168.0.124:3000"
+      url = Ping.env? == :production ? "ping.techrockstars.com" : "techrockstars.com:3000"
       machine_url = "http://#{url}/machine/#{machine[:machine_id]}"
       data = { :_method => :put, :tracer_data => @results }
 
@@ -61,4 +61,5 @@ begin
   end
 rescue Exception => e
   EventLogger.process_exception("Traceroute", e)
+  exit 1
 end

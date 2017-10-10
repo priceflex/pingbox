@@ -37,9 +37,9 @@ class SendToS3
       if uploaded_file
         if verify_upload(uploaded_file)
           success_count += 1
-          FileUtils.rm(file) 
+          FileUtils.rm_rf(file) 
         else
-          file.delete # data was corrupt, delete from S3
+          uploaded_file.delete # data was corrupt, delete from S3
           failed_count += 1
         end
       end
@@ -47,6 +47,11 @@ class SendToS3
 
     if files.count > 0
       puts "#{success_count} file(s) uploaded successfully to #{@ping_bucket}. #{failed_count} failed."
+      if failed_count > 0
+        e = Exception.new("#{failed_count} files failed to upload to S3.")
+        e.set_backtrace([])
+        EventLogger.process_exception("S3 upload", e)
+      end
     else
       puts "No files to upload."
     end
@@ -76,6 +81,9 @@ class SendToS3
 
     # FileUtils.rm("#{$pingbox_root}/tmp/tmp")
     return original_hash == new_hash ?  true : false
+  rescue => e
+    puts e.message
+    return true # the file has already been processed and by lambda.
   end
 
 end

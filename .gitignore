@@ -15,6 +15,7 @@
 
 # Ignore any data files.
 /data/*.gz
+/data/*.json
 
 # Ignore temp files
 /tmp/*

@@ -8,4 +8,5 @@ begin
   amazon_s3.upload_ping_files
 rescue Exception => e
   EventLogger.process_exception("Upload to S3", e)
+  exit 1
 end

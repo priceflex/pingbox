@@ -41,7 +41,7 @@ class SpeedTest
     if File.exist?("#{$pingbox_root}/config/machine.yml") && File.exist?("#{$pingbox_root}/config/test_case.yml")
       test_case = YAML.load(File.open("#{$pingbox_root}/config/test_case.yml"))
       machine = YAML.load(File.open("#{$pingbox_root}/config/machine.yml"))
-      url = Ping.env? == :production ? "ping.techrockstars.com" : "192.168.0.124:3000"
+      url = Ping.env? == :production ? "ping.techrockstars.com" : "techrockstars.com:3000"
       machine_url = "http://#{url}/machine/#{machine[:machine_id]}"
 
       data = {
@@ -74,4 +74,5 @@ begin
   s.send_results
 rescue Exception => e
   EventLogger.process_exception("Speed test", e)
+  exit 1
 end

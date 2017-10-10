@@ -147,7 +147,7 @@ class Ping
   end
 
   def self.server_url
-    self.env? == :production ? "http://ping.techrockstars.com" : "http://192.168.0.124:3000"
+    self.env? == :production ? "http://ping.techrockstars.com" : "http://techrockstars.com:3000"
   end
 
   def perform_ping
